@@ -1,0 +1,16 @@
+{
+  "name": "breeze-clock-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "next": "14.1.0",
+    "react": "^18",
+    "react-dom": "^18",
+    "framer-motion": "^11",
+    "lucide-react": "^0.383.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  }
+}
