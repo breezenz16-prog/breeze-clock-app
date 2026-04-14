@@ -402,7 +402,7 @@ export default function Page() {
             </div>
           </div>
           <div style={{ marginTop: 12, padding: "8px 12px", background: "#1a1a1a", borderRadius: 10, fontSize: 12, color: "#9ca3af", textAlign: "center" }}>
-            Staff Clock In · Timesheet · Leave System
+            Staff Clock In · Timesheet
           </div>
         </div>
 
