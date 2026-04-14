@@ -733,7 +733,7 @@ export default function Page() {
                                 <button style={buttonStyle("danger")} onClick={() => removeEmployee(emp.id)}>Remove</button>
                               </div>
                             )}
-                          </div>
+                          </>
                         )}
                       </div>
                     ))}
@@ -773,7 +773,8 @@ export default function Page() {
                     </div>
                   )}
                     ? <div style={{ color: "#6b7280", padding: "8px 0" }}>No shift records yet.</div>
-                    : <div>
+                    : <>
+
                         <div>
                         <div style={{ display: "grid", gap: 10 }}>
                           {(() => {
@@ -849,8 +850,10 @@ export default function Page() {
                           ⬇️ Download Timesheet CSV for Xero
                         </button>
                         </div>
-                        )}
+                      </>
+                  }
                 </div>
+
                 <div style={cardStyle()}>
                   <h3 style={{ margin: "0 0 4px 0" }}>Timesheet Approvals</h3>
                   <div style={{ color: "#6b7280", fontSize: 13, marginBottom: 12 }}>Review and approve submitted timesheets</div>
