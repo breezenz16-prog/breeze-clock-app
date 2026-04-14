@@ -203,6 +203,7 @@ export default function Page() {
   const [editingEmployeeRole, setEditingEmployeeRole] = useState("FOH");
   const [resetPasswordEmployeeId, setResetPasswordEmployeeId] = useState("");
   const [resetPasswordValue, setResetPasswordValue] = useState("");
+  const [expandedEmployeeId, setExpandedEmployeeId] = useState("");
   const [editingTimesheetId, setEditingTimesheetId] = useState("");
   const [editingTimesheetHours, setEditingTimesheetHours] = useState("");
   const [editingShiftId, setEditingShiftId] = useState("");
@@ -394,6 +395,7 @@ export default function Page() {
     if (!selectedEmployee || !selectedFortnightRange) return;
     const existingPending = timesheetSubmissions.find(i => i.employeeId === selectedEmployee.id && i.period === selectedFortnightRange.label && i.status === "Pending");
     if (existingPending) { setMessage("A timesheet for this fortnight is already pending approval."); return; }
+    if (!window.confirm(`Are you sure you want to submit your timesheet for ${selectedFortnightRange.label}?`)) return;
     try {
       await addDoc(collection(db, "timesheetSubmissions"), {
         employeeId: selectedEmployee.id,
@@ -606,7 +608,26 @@ export default function Page() {
                         </tbody>
                       </table>
                     </div>
-                    <div style={{ marginTop: 12 }}><button style={buttonStyle()} onClick={handleSubmitTimesheet}>Submit for Approval</button></div>
+                    <div style={{ marginTop: 12 }}>
+                      {/* Staff timesheet submissions status */}
+                      {timesheetSubmissions.filter(t => t.employeeId === employeeId).length > 0 && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 14 }}>Submission Status</div>
+                          {timesheetSubmissions.filter(t => t.employeeId === employeeId).map(t => (
+                            <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#f9fafb", borderRadius: 10, marginBottom: 6, border: "1px solid #e5e7eb" }}>
+                              <div style={{ fontSize: 13 }}>{t.period}</div>
+                              <span style={{
+                                background: t.status === "Approved" ? "#065f46" : t.status === "Rejected" ? "#991b1b" : "#92400e",
+                                color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12, fontWeight: 700
+                              }}>
+                                {t.status === "Approved" ? "✅ Approved" : t.status === "Rejected" ? "❌ Rejected" : "⏳ Pending"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <button style={buttonStyle()} onClick={handleSubmitTimesheet}>Submit for Approval</button>
+                    </div>
                   </div>
 
                   <button style={buttonStyle("ghost")} onClick={handleEmployeeLogout}>Log Out</button>
