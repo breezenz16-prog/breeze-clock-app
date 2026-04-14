@@ -307,7 +307,32 @@ export default function Page() {
 
   const fortnightHours = useMemo(() => fortnightEntries.reduce((s, r) => s + r.hours, 0), [fortnightEntries]);
 
-  const filteredTimesheetSubmissions = useMemo(() => timesheetStatusFilter === "all" ? timesheetSubmissions : timesheetSubmissions.filter(i => i.status.toLowerCase() === timesheetStatusFilter), [timesheetSubmissions, timesheetStatusFilter]);
+  const filteredTimesheetSubmissions = useMemo(() => {
+    const notRejected = timesheetSubmissions.filter(i => i.status.toLowerCase() !== "rejected");
+    if (timesheetStatusFilter === "all") return notRejected;
+    return notRejected.filter(i => i.status.toLowerCase() === timesheetStatusFilter);
+  }, [timesheetSubmissions, timesheetStatusFilter]);
+
+  function downloadTimesheetCSV() {
+    const rows = [["Employee", "Role", "Period", "Total Hours"]];
+    const empTotals = {};
+    filteredEntries.forEach(e => {
+      if (!e.clockOut) return;
+      if (!empTotals[e.employeeId]) empTotals[e.employeeId] = { name: e.employeeName, role: e.role, hours: 0 };
+      empTotals[e.employeeId].hours += e.totalHours || 0;
+    });
+    Object.values(empTotals).forEach(emp => {
+      rows.push([emp.name, emp.role, selectedAdminFortnightRange?.label || "", emp.hours.toFixed(2)]);
+    });
+    const csv = rows.map(r => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Breeze_Timesheet_${selectedAdminFortnightRange?.label || "fortnight"}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
   const employeeSummary = useMemo(() => {
     const totals = {};
     entries.forEach(e => {
@@ -783,6 +808,9 @@ export default function Page() {
                           <div style={{ fontSize: 14 }}>Total Hours (this period)</div>
                           <div style={{ fontSize: 24, fontWeight: 700, color: "#ffd700" }}>{filteredEntries.reduce((s, e) => s + (e.totalHours || 0), 0).toFixed(2)} hrs</div>
                         </div>
+                        <button style={{ ...buttonStyle(), background: "linear-gradient(135deg, #b8860b, #ffd700)", color: "#000", width: "100%", marginTop: 10, fontWeight: 800 }} onClick={downloadTimesheetCSV}>
+                          ⬇️ Download Timesheet CSV for Xero
+                        </button>
                       </>
                   }
                 </div>
