@@ -23,6 +23,47 @@ const DEFAULT_ADMIN_PASSWORD = "02041462704";
 const NZ_TIMEZONE = "Pacific/Auckland";
 const ADMIN_IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 
+// 📍 Breeze Restaurant location - 16 Hood St, Hamilton Central
+const RESTAURANT_LAT = -37.7870;
+const RESTAURANT_LNG = 175.2793;
+const MAX_DISTANCE_METERS = 50; // must be within 50 meters
+
+function getDistanceMeters(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function checkLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject("Your device doesn't support location services.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const dist = getDistanceMeters(
+          pos.coords.latitude, pos.coords.longitude,
+          RESTAURANT_LAT, RESTAURANT_LNG
+        );
+        if (dist <= MAX_DISTANCE_METERS) {
+          resolve(dist);
+        } else {
+          reject(`You are too far from the restaurant (${Math.round(dist)}m away). You must be within ${MAX_DISTANCE_METERS}m to clock in or out.`);
+        }
+      },
+      (err) => {
+        reject("Location access denied. Please allow location access to clock in or out.");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+}
+
 const defaultEmployees = [
   { id: "emp-1", name: "Noor", email: "noor@breeze.local", password: "1111", role: "FOH", active: true },
   { id: "emp-2", name: "Smith", email: "smith@breeze.local", password: "2222", role: "Chef", active: true },
@@ -263,6 +304,13 @@ export default function Page() {
   async function handleClockIn() {
     if (!selectedEmployee) return;
     if (activeShifts[selectedEmployee.id]) { setMessage("Already clocked in."); return; }
+    setMessage("📍 Checking your location...");
+    try {
+      await checkLocation();
+    } catch (err) {
+      setMessage(`❌ ${err}`);
+      return;
+    }
     try {
       await addDoc(collection(db, "shifts"), {
         employeeId: selectedEmployee.id,
@@ -281,6 +329,13 @@ export default function Page() {
     const activeId = activeShifts[selectedEmployee.id];
     if (!activeId) { setMessage("Not clocked in."); return; }
     if (!window.confirm(`Are you sure you want to clock out, ${selectedEmployee.name}?`)) return;
+    setMessage("📍 Checking your location...");
+    try {
+      await checkLocation();
+    } catch (err) {
+      setMessage(`❌ ${err}`);
+      return;
+    }
     const stamp = nowIso();
     const entry = entries.find(e => e.id === activeId);
     if (!entry) return;
