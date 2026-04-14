@@ -775,6 +775,7 @@ export default function Page() {
                     ? <div style={{ color: "#6b7280", padding: "8px 0" }}>No shift records yet.</div>
                     : <>
 
+                        <div>
                         <div style={{ display: "grid", gap: 10 }}>
                           {(() => {
                             // Group shifts by employee + date
@@ -844,9 +845,11 @@ export default function Page() {
                           <div style={{ fontSize: 14 }}>Total Hours (this period)</div>
                           <div style={{ fontSize: 24, fontWeight: 700, color: "#ffd700" }}>{filteredEntries.reduce((s, e) => s + (e.totalHours || 0), 0).toFixed(2)} hrs</div>
                         </div>
+                        </div>
                         <button style={{ ...buttonStyle(), background: "linear-gradient(135deg, #b8860b, #ffd700)", color: "#000", width: "100%", marginTop: 10, fontWeight: 800 }} onClick={downloadTimesheetCSV}>
                           ⬇️ Download Timesheet CSV for Xero
                         </button>
+                        </div>
                       </>
                   }
                 </div>
