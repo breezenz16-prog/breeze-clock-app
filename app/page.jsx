@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { initializeApp } from "firebase/app";
 import {
   getFirestore, collection, addDoc, getDocs,
-  doc, updateDoc, onSnapshot, query, orderBy
+  doc, updateDoc, deleteDoc, onSnapshot, query, orderBy
 } from "firebase/firestore";
 
 const firebaseConfig = {
