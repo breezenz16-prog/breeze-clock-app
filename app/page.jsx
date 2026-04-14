@@ -443,23 +443,20 @@ export default function Page() {
                 </div>
               ) : (
                 <div style={{ display: "grid", gap: 16 }}>
-                  <div style={{ ...cardStyle(), padding: 14, background: "#f9fafb" }}>
-                    <div style={{ fontWeight: 700, fontSize: 18 }}>{selectedEmployee?.name}</div>
-                    <div style={{ color: activeShifts[selectedEmployee?.id] ? "#065f46" : "#6b7280", marginTop: 4, fontWeight: 600 }}>{activeShifts[selectedEmployee?.id] ? "🟢 Clocked In" : "⚪ Not Clocked In"}</div>
-                    <div style={{ marginTop: 10, background: "#111827", borderRadius: 12, padding: "10px 14px", textAlign: "center" }}>
-                      <div style={{ fontSize: 28, fontWeight: 900, color: "#ffd700", letterSpacing: 2, fontFamily: "monospace" }}>
-                        {liveTime.toLocaleTimeString("en-NZ", { timeZone: NZ_TIMEZONE, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
-                      </div>
-                      <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 4 }}>
-                        {liveTime.toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, weekday: "long", day: "numeric", month: "long" })}
-                      </div>
+                  <div style={{ ...cardStyle(), padding: 16, background: "#111827", borderRadius: 16 }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#ffd700" }}>👋 Welcome, {selectedEmployee?.name}!</div>
+                    <div style={{ color: "#9ca3af", marginTop: 6, fontSize: 14 }}>
+                      {liveTime.toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, weekday: "long", day: "numeric", month: "long" })}
+                    </div>
+                    <div style={{ marginTop: 8, display: "inline-block", background: activeShifts[selectedEmployee?.id] ? "#065f46" : "#1f2937", borderRadius: 10, padding: "4px 12px", fontSize: 13, fontWeight: 600, color: activeShifts[selectedEmployee?.id] ? "#6ee7b7" : "#9ca3af" }}>
+                      {activeShifts[selectedEmployee?.id] ? "🟢 Currently Clocked In" : "⚪ Not Clocked In"}
                     </div>
                   </div>
                   <div style={cardStyle()}>
-                    <div style={{ fontWeight: 700, marginBottom: 12 }}>Attendance</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                      <button style={buttonStyle()} onClick={handleClockIn}>Clock In</button>
-                      <button style={buttonStyle("secondary")} onClick={handleClockOut}>Clock Out</button>
+                    <div style={{ fontWeight: 700, marginBottom: 16 }}>Attendance</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <button style={{ padding: "18px 12px", borderRadius: 50, border: "none", cursor: "pointer", fontSize: 15, fontWeight: 800, background: "linear-gradient(135deg, #b8860b, #ffd700)", color: "#000", boxShadow: "0 4px 12px rgba(184,134,11,0.4)" }} onClick={handleClockIn}>⏵ Clock In</button>
+                      <button style={{ padding: "18px 12px", borderRadius: 50, border: "2px solid #d1d5db", cursor: "pointer", fontSize: 15, fontWeight: 800, background: "#fff", color: "#111827" }} onClick={handleClockOut}>⏹ Clock Out</button>
                     </div>
                   </div>
                   <div style={cardStyle()}>
