@@ -115,11 +115,7 @@ export default function Page() {
   const [adminResetEmail, setAdminResetEmail] = useState("");
   const [newAdminPassword, setNewAdminPassword] = useState("");
   const [confirmAdminPassword, setConfirmAdminPassword] = useState("");
-  const [leaveType, setLeaveType] = useState("annual");
-  const [leaveStartDate, setLeaveStartDate] = useState("");
-  const [leaveEndDate, setLeaveEndDate] = useState("");
-  const [leaveReason, setLeaveReason] = useState("");
-  const [leaveStatusFilter, setLeaveStatusFilter] = useState("all");
+
   const [adminFilter, setAdminFilter] = useState("all");
   const [timesheetStatusFilter, setTimesheetStatusFilter] = useState("all");
   const [selectedFortnight, setSelectedFortnight] = useState("");
@@ -232,7 +228,7 @@ export default function Page() {
   }, [entries, employeeId, selectedFortnightRange]);
 
   const fortnightHours = useMemo(() => fortnightEntries.reduce((s, r) => s + r.hours, 0), [fortnightEntries]);
-  const filteredLeaveRequests = useMemo(() => leaveStatusFilter === "all" ? leaveRequests : leaveRequests.filter(r => r.status.toLowerCase() === leaveStatusFilter), [leaveRequests, leaveStatusFilter]);
+
   const filteredTimesheetSubmissions = useMemo(() => timesheetStatusFilter === "all" ? timesheetSubmissions : timesheetSubmissions.filter(i => i.status.toLowerCase() === timesheetStatusFilter), [timesheetSubmissions, timesheetStatusFilter]);
   const employeeSummary = useMemo(() => {
     const totals = {};
@@ -292,25 +288,7 @@ export default function Page() {
     } catch (err) { setMessage("Error clocking out. Please try again."); }
   }
 
-  async function handleLeaveRequest() {
-    if (!selectedEmployee) return;
-    if (!leaveStartDate || !leaveEndDate) { setMessage("Please select leave start and end dates."); return; }
-    if (new Date(leaveEndDate) < new Date(leaveStartDate)) { setMessage("Leave end date cannot be before start date."); return; }
-    try {
-      await addDoc(collection(db, "leaveRequests"), {
-        employeeId: selectedEmployee.id,
-        employeeName: selectedEmployee.name,
-        type: leaveType,
-        startDate: leaveStartDate,
-        endDate: leaveEndDate,
-        reason: leaveReason.trim(),
-        status: "Pending",
-        requestedAt: nowIso(),
-      });
-      setLeaveType("annual"); setLeaveStartDate(""); setLeaveEndDate(""); setLeaveReason("");
-      setMessage("Leave request submitted. ✅");
-    } catch (err) { setMessage("Error submitting leave request."); }
-  }
+
 
   async function handleSubmitTimesheet() {
     if (!selectedEmployee || !selectedFortnightRange) return;
@@ -391,12 +369,7 @@ export default function Page() {
     } catch (err) { setMessage("Error removing employee."); }
   }
 
-  async function updateLeaveStatus(reqId, status) {
-    try {
-      await updateDoc(doc(db, "leaveRequests", reqId), { status });
-      setMessage(`Leave request ${status.toLowerCase()}. ✅`);
-    } catch (err) { setMessage("Error updating leave request."); }
-  }
+
 
   async function updateTimesheetStatus(subId, status) {
     try {
@@ -500,27 +473,7 @@ export default function Page() {
                     </div>
                     <div style={{ marginTop: 12 }}><button style={buttonStyle()} onClick={handleSubmitTimesheet}>Submit for Approval</button></div>
                   </div>
-                  <div style={cardStyle()}>
-                    <div style={{ fontWeight: 700, marginBottom: 12 }}>Leave Request</div>
-                    <div style={{ display: "grid", gap: 12 }}>
-                      <div>
-                        <div style={{ marginBottom: 6, fontSize: 14, fontWeight: 600 }}>Leave type</div>
-                        <select style={inputStyle()} value={leaveType} onChange={e => setLeaveType(e.target.value)}>
-                          <option value="annual">Annual Leave</option>
-                          <option value="sick">Sick Leave</option>
-                          <option value="unpaid">Unpaid Leave</option>
-                          <option value="bereavement">Bereavement Leave</option>
-                          <option value="other">Other Leave</option>
-                        </select>
-                      </div>
-                      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}>
-                        <div><div style={{ marginBottom: 6, fontSize: 14, fontWeight: 600 }}>Start date</div><input style={inputStyle()} type="date" value={leaveStartDate} onChange={e => setLeaveStartDate(e.target.value)} /></div>
-                        <div><div style={{ marginBottom: 6, fontSize: 14, fontWeight: 600 }}>End date</div><input style={inputStyle()} type="date" value={leaveEndDate} onChange={e => setLeaveEndDate(e.target.value)} /></div>
-                      </div>
-                      <div><div style={{ marginBottom: 6, fontSize: 14, fontWeight: 600 }}>Reason (optional)</div><input style={inputStyle()} value={leaveReason} onChange={e => setLeaveReason(e.target.value)} placeholder="Optional reason" /></div>
-                      <button style={buttonStyle("secondary")} onClick={handleLeaveRequest}>Submit Leave Request</button>
-                    </div>
-                  </div>
+
                   <button style={buttonStyle("ghost")} onClick={handleEmployeeLogout}>Log Out</button>
                 </div>
               )}
@@ -654,34 +607,7 @@ export default function Page() {
                       </>
                   }
                 </div>
-                <div style={cardStyle()}>
-                  <h3 style={{ margin: "0 0 4px 0" }}>Leave Requests</h3>
-                  <div style={{ color: "#6b7280", fontSize: 13, marginBottom: 12 }}>Approve or reject staff leave requests</div>
-                  <select style={{ ...inputStyle(), marginBottom: 16 }} value={leaveStatusFilter} onChange={e => setLeaveStatusFilter(e.target.value)}>
-                    <option value="all">All requests</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
-                  </select>
-                  {filteredLeaveRequests.length === 0
-                    ? <div style={{ color: "#6b7280" }}>No leave requests yet.</div>
-                    : <div style={{ display: "grid", gap: 10 }}>
-                        {filteredLeaveRequests.map(r => (
-                          <div key={r.id} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                              <div style={{ fontWeight: 700 }}>{r.employeeName}</div>
-                              <span style={{ background: r.status === "Approved" ? "#065f46" : r.status === "Rejected" ? "#991b1b" : "#92400e", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12, textTransform: "capitalize" }}>{r.status}</span>
-                            </div>
-                            <div style={{ fontSize: 13, marginBottom: 6 }}>
-                              <span style={{ textTransform: "capitalize", fontWeight: 600 }}>{r.type}</span> · {r.startDate} → {r.endDate}
-                            </div>
-                            {r.reason && <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 10 }}>{r.reason}</div>}
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                              <button style={buttonStyle()} onClick={() => updateLeaveStatus(r.id, "Approved")}>Approve</button>
-                              <button style={buttonStyle("secondary")} onClick={() => updateLeaveStatus(r.id, "Rejected")}>Reject</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                  }
-                </div>
+
                 <div style={cardStyle()}>
                   <h3 style={{ margin: "0 0 4px 0" }}>Timesheet Approvals</h3>
                   <div style={{ color: "#6b7280", fontSize: 13, marginBottom: 12 }}>Review and approve submitted timesheets</div>
