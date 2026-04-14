@@ -1,5 +1,5 @@
 # 🍛 Breeze Clock App
-**Version: 54**
+**Version: 59**
 Live URL: https://breeze-clock-app.vercel.app
 
 Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
@@ -24,23 +24,24 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - 🧪 Test mode for noor & seema accounts
 - Fortnight timesheet view with dates & hours
 - Timesheet submission with "Are you sure?" confirmation
-- ✅ Staff can see Approved / ❌ Rejected / ⏳ Pending status on submitted timesheets
+- ✅ Staff can see Approved / ⏳ Pending status on submitted timesheets
 
 ## 👑 Admin Portal
 - Password protected login
 - Auto logout after 10 mins idle
 - Centred red logout button
 - Add / Edit / Remove employees
-- Employee cards with ▼ dropdown for Edit, Reset PW, Remove
 - Reset employee passwords
 - "Are you sure?" on all destructive actions
 - Live shifts from all devices 🔥
-- Per-employee hours total
+- Per-employee hours total in shift cards
 - Grand total hours for selected fortnight
 - Fortnight selector & shift filter
 - ✏️ Edit shift times manually
 - 🗑️ Delete shifts
-- Timesheet approvals with ↩️ Undo button
+- Timesheet approvals — Pending & Approved only
+- ↩️ Undo timesheet approval
+- ⬇️ Download Timesheet CSV for Xero
 - 12-hour AM/PM time format
 - Auto clock out at midnight
 - 📧 Email alert when staff forgot to clock out
