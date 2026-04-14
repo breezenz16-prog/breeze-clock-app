@@ -54,7 +54,8 @@ async function sendEmailNotification(staffName, role, action) {
   }
 }
 
-// 📍 Breeze Restaurant location - 16 Hood St, Hamilton Central
+// Test accounts - GPS bypass
+const TEST_ACCOUNTS = ["noor@breeze.local", "seema@breeze.local"];
 const RESTAURANT_LAT = -37.7870;
 const RESTAURANT_LNG = 175.2793;
 const MAX_DISTANCE_METERS = 50; // must be within 50 meters
@@ -335,12 +336,17 @@ export default function Page() {
   async function handleClockIn() {
     if (!selectedEmployee) return;
     if (activeShifts[selectedEmployee.id]) { setMessage("Already clocked in."); return; }
-    setMessage("📍 Checking your location...");
-    try {
-      await checkLocation();
-    } catch (err) {
-      setMessage(`❌ ${err}`);
-      return;
+    const isTestAccount = TEST_ACCOUNTS.includes(selectedEmployee.email?.toLowerCase());
+    if (!isTestAccount) {
+      setMessage("📍 Checking your location...");
+      try {
+        await checkLocation();
+      } catch (err) {
+        setMessage(`❌ ${err}`);
+        return;
+      }
+    } else {
+      setMessage("🧪 Test mode — GPS bypassed.");
     }
     try {
       await addDoc(collection(db, "shifts"), {
@@ -360,12 +366,15 @@ export default function Page() {
     const activeId = activeShifts[selectedEmployee.id];
     if (!activeId) { setMessage("Not clocked in."); return; }
     if (!window.confirm(`Are you sure you want to clock out, ${selectedEmployee.name}?`)) return;
-    setMessage("📍 Checking your location...");
-    try {
-      await checkLocation();
-    } catch (err) {
-      setMessage(`❌ ${err}`);
-      return;
+    const isTestAccount = TEST_ACCOUNTS.includes(selectedEmployee.email?.toLowerCase());
+    if (!isTestAccount) {
+      setMessage("📍 Checking your location...");
+      try {
+        await checkLocation();
+      } catch (err) {
+        setMessage(`❌ ${err}`);
+        return;
+      }
     }
     const stamp = nowIso();
     const entry = entries.find(e => e.id === activeId);
