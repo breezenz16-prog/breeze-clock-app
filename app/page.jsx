@@ -132,6 +132,10 @@ export default function Page() {
   const [resetPasswordValue, setResetPasswordValue] = useState("");
   const [editingTimesheetId, setEditingTimesheetId] = useState("");
   const [editingTimesheetHours, setEditingTimesheetHours] = useState("");
+  const [editingShiftId, setEditingShiftId] = useState("");
+  const [editingShiftClockIn, setEditingShiftClockIn] = useState("");
+  const [editingShiftClockOut, setEditingShiftClockOut] = useState("");
+  const [liveTime, setLiveTime] = useState(new Date());
 
   const fortnightOptions = useMemo(() => getFortnightOptions(), []);
 
@@ -276,6 +280,7 @@ export default function Page() {
     if (!selectedEmployee) return;
     const activeId = activeShifts[selectedEmployee.id];
     if (!activeId) { setMessage("Not clocked in."); return; }
+    if (!window.confirm(`Are you sure you want to clock out, ${selectedEmployee.name}?`)) return;
     const stamp = nowIso();
     const entry = entries.find(e => e.id === activeId);
     if (!entry) return;
@@ -436,8 +441,16 @@ export default function Page() {
               ) : (
                 <div style={{ display: "grid", gap: 16 }}>
                   <div style={{ ...cardStyle(), padding: 14, background: "#f9fafb" }}>
-                    <div style={{ fontWeight: 700 }}>{selectedEmployee?.name}</div>
-                    <div style={{ color: "#6b7280", marginTop: 4 }}>{activeShifts[selectedEmployee?.id] ? "🟢 Clocked In" : "⚪ Not Clocked In"}</div>
+                    <div style={{ fontWeight: 700, fontSize: 18 }}>{selectedEmployee?.name}</div>
+                    <div style={{ color: activeShifts[selectedEmployee?.id] ? "#065f46" : "#6b7280", marginTop: 4, fontWeight: 600 }}>{activeShifts[selectedEmployee?.id] ? "🟢 Clocked In" : "⚪ Not Clocked In"}</div>
+                    <div style={{ marginTop: 10, background: "#111827", borderRadius: 12, padding: "10px 14px", textAlign: "center" }}>
+                      <div style={{ fontSize: 28, fontWeight: 900, color: "#ffd700", letterSpacing: 2, fontFamily: "monospace" }}>
+                        {liveTime.toLocaleTimeString("en-NZ", { timeZone: NZ_TIMEZONE, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 4 }}>
+                        {liveTime.toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, weekday: "long", day: "numeric", month: "long" })}
+                      </div>
+                    </div>
                   </div>
                   <div style={cardStyle()}>
                     <div style={{ fontWeight: 700, marginBottom: 12 }}>Attendance</div>
@@ -575,34 +588,78 @@ export default function Page() {
                   {filteredEntries.length === 0
                     ? <div style={{ color: "#6b7280", padding: "8px 0" }}>No shift records yet.</div>
                     : <>
+                        {/* Per employee totals */}
+                        {(() => {
+                          const empTotals = {};
+                          filteredEntries.forEach(e => {
+                            if (!empTotals[e.employeeName]) empTotals[e.employeeName] = { role: e.role, hours: 0, open: 0 };
+                            empTotals[e.employeeName].hours += e.totalHours || 0;
+                            if (!e.clockOut) empTotals[e.employeeName].open++;
+                          });
+                          return (
+                            <div style={{ display: "grid", gap: 8, marginBottom: 14 }}>
+                              {Object.entries(empTotals).map(([name, data]) => (
+                                <div key={name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#1f2937", borderRadius: 12, padding: "10px 14px" }}>
+                                  <div>
+                                    <div style={{ fontWeight: 700, color: "#fff" }}>{name}</div>
+                                    <div style={{ fontSize: 12, color: "#9ca3af" }}>{data.role}{data.open > 0 ? ` · 🟢 ${data.open} open` : ""}</div>
+                                  </div>
+                                  <div style={{ fontWeight: 900, fontSize: 20, color: "#ffd700" }}>{data.hours.toFixed(2)} hrs</div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
                         <div style={{ display: "grid", gap: 10 }}>
                           {filteredEntries.map(e => (
                             <div key={e.id} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                                <div style={{ fontWeight: 700, fontSize: 16 }}>{e.employeeName}</div>
-                                <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{e.role}</span>
-                              </div>
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 13 }}>
-                                <div>
-                                  <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock In</div>
-                                  <div style={{ fontWeight: 600 }}>{formatDateTimeNZ(e.clockIn)}</div>
+                              {editingShiftId === e.id ? (
+                                <div style={{ display: "grid", gap: 10 }}>
+                                  <div style={{ fontWeight: 700, marginBottom: 4 }}>Edit Shift — {e.employeeName}</div>
+                                  <div>
+                                    <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock In</div>
+                                    <input style={inputStyle()} type="datetime-local" value={editingShiftClockIn} onChange={ev => setEditingShiftClockIn(ev.target.value)} />
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock Out (leave empty if still in)</div>
+                                    <input style={inputStyle()} type="datetime-local" value={editingShiftClockOut} onChange={ev => setEditingShiftClockOut(ev.target.value)} />
+                                  </div>
+                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                                    <button style={buttonStyle()} onClick={() => saveEditShift(e.id)}>Save</button>
+                                    <button style={buttonStyle("ghost")} onClick={() => setEditingShiftId("")}>Cancel</button>
+                                  </div>
                                 </div>
-                                <div>
-                                  <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock Out</div>
-                                  <div style={{ fontWeight: 600 }}>{e.clockOut ? formatDateTimeNZ(e.clockOut) : "🟢 Still in"}</div>
-                                </div>
-                              </div>
-                              {e.totalHours != null && (
-                                <div style={{ marginTop: 8, fontSize: 13, color: "#6b7280" }}>
-                                  Total: <strong>{e.totalHours.toFixed(2)} hrs</strong>
-                                </div>
+                              ) : (
+                                <>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                                    <div style={{ fontWeight: 700, fontSize: 16 }}>{e.employeeName}</div>
+                                    <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{e.role}</span>
+                                  </div>
+                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 13 }}>
+                                    <div>
+                                      <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock In</div>
+                                      <div style={{ fontWeight: 600 }}>{formatDateTimeNZ(e.clockIn)}</div>
+                                    </div>
+                                    <div>
+                                      <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock Out</div>
+                                      <div style={{ fontWeight: 600 }}>{e.clockOut ? formatDateTimeNZ(e.clockOut) : "🟢 Still in"}</div>
+                                    </div>
+                                  </div>
+                                  {e.totalHours != null && (
+                                    <div style={{ marginTop: 8, fontSize: 13, color: "#6b7280" }}>Total: <strong>{e.totalHours.toFixed(2)} hrs</strong></div>
+                                  )}
+                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
+                                    <button style={buttonStyle("secondary")} onClick={() => startEditShift(e)}>✏️ Edit</button>
+                                    <button style={buttonStyle("danger")} onClick={() => deleteShift(e.id)}>🗑️ Delete</button>
+                                  </div>
+                                </>
                               )}
                             </div>
                           ))}
                         </div>
                         <div style={{ marginTop: 14, padding: 14, background: "#111827", borderRadius: 14, color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div style={{ fontSize: 14 }}>Total Hours (this period)</div>
-                          <div style={{ fontSize: 24, fontWeight: 700 }}>{filteredEntries.reduce((s, e) => s + (e.totalHours || 0), 0).toFixed(2)} hrs</div>
+                          <div style={{ fontSize: 24, fontWeight: 700, color: "#ffd700" }}>{filteredEntries.reduce((s, e) => s + (e.totalHours || 0), 0).toFixed(2)} hrs</div>
                         </div>
                       </>
                   }
