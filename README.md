@@ -1,5 +1,5 @@
 # 🍛 Breeze Clock App
-**Version: 59**
+**Version: 76**
 Live URL: https://breeze-clock-app.vercel.app
 
 Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
@@ -31,10 +31,12 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - Auto logout after 10 mins idle
 - Centred red logout button
 - Add / Edit / Remove employees
+- Employee cards with ▼ dropdown for Edit, Reset PW, Remove
 - Reset employee passwords
 - "Are you sure?" on all destructive actions
 - Live shifts from all devices 🔥
-- Per-employee hours total in shift cards
+- Shifts grouped by employee & date (split shift friendly)
+- Day total shown for split shifts
 - Grand total hours for selected fortnight
 - Fortnight selector & shift filter
 - ✏️ Edit shift times manually
