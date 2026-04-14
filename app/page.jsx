@@ -417,26 +417,30 @@ export default function Page() {
   if (loading) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Arial", fontSize: 18 }}>Loading Breeze...</div>;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f3f4f6", padding: 16, fontFamily: "Arial, sans-serif", color: "#111827" }}>
+    <div style={{ minHeight: "100vh", background: "#111827", padding: 16, fontFamily: "Arial, sans-serif", color: "#111827" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gap: 16 }}>
-        <div style={cardStyle()}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 14, background: "#111827", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>B</div>
+        <div style={{ background: "#000", borderRadius: 20, padding: "20px 18px", boxShadow: "0 2px 12px rgba(0,0,0,0.3)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg, #b8860b, #ffd700, #b8860b)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 28, color: "#000", flexShrink: 0, boxShadow: "0 2px 8px rgba(184,134,11,0.4)" }}>B</div>
             <div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>Breeze Indian Restaurant</div>
-              <div style={{ color: "#6b7280", marginTop: 4 }}>Staff clock in, timesheet and leave system</div>
+              <div style={{ fontSize: 26, fontWeight: 900, color: "#fff", letterSpacing: 1 }}>Breeze</div>
+              <div style={{ fontSize: 13, color: "#ffd700", fontStyle: "italic", marginTop: 1 }}>Indian Restaurant</div>
+              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>16 Hood St, Hamilton Central · 07 949 8159</div>
             </div>
+          </div>
+          <div style={{ marginTop: 12, padding: "8px 12px", background: "#1a1a1a", borderRadius: 10, fontSize: 12, color: "#9ca3af", textAlign: "center" }}>
+            Staff Clock In · Timesheet · Leave System
           </div>
         </div>
 
-        {message ? <div style={{ ...cardStyle(), padding: 12 }}>{message}</div> : null}
+        {message ? <div style={{ background: "#ffd700", borderRadius: 14, padding: 12, fontWeight: 600, color: "#000" }}>{message}</div> : null}
 
         {!employeeLoggedIn ? (
           <div style={{ display: "flex", gap: 8, maxWidth: 320 }}>
-            <button style={buttonStyle(activeTab === "staff" ? "primary" : "ghost")} onClick={() => setActiveTab("staff")}>Staff</button>
-            <button style={buttonStyle(activeTab === "admin" ? "primary" : "ghost")} onClick={() => setActiveTab("admin")}>Admin</button>
+            <button style={{ ...buttonStyle(activeTab === "staff" ? "primary" : "ghost"), background: activeTab === "staff" ? "linear-gradient(135deg, #b8860b, #ffd700)" : "#1f2937", color: activeTab === "staff" ? "#000" : "#9ca3af", border: "none", fontWeight: 700 }} onClick={() => setActiveTab("staff")}>Staff</button>
+            <button style={{ ...buttonStyle(activeTab === "admin" ? "primary" : "ghost"), background: activeTab === "admin" ? "linear-gradient(135deg, #b8860b, #ffd700)" : "#1f2937", color: activeTab === "admin" ? "#000" : "#9ca3af", border: "none", fontWeight: 700 }} onClick={() => setActiveTab("admin")}>Admin</button>
           </div>
-        ) : <div style={{ color: "#6b7280", fontSize: 13 }}>Staff session active</div>}
+        ) : <div style={{ color: "#ffd700", fontSize: 13, fontWeight: 600 }}>✅ Staff session active</div>}
 
         {activeTab === "staff" ? (
           <div style={{ display: "grid", gap: 16, maxWidth: 540 }}>
@@ -544,7 +548,7 @@ export default function Page() {
               </div>
             ) : (
               <>
-                <div style={{ display: "flex", justifyContent: "flex-end" }}><button style={buttonStyle("ghost")} onClick={handleAdminLogout}>Log Out (Admin)</button></div>
+                <div style={{ display: "flex", justifyContent: "center" }}><button style={{ ...buttonStyle("danger"), minWidth: 180 }} onClick={handleAdminLogout}>Log Out (Admin)</button></div>
                 <div style={cardStyle()}>
                   <h3 style={{ marginTop: 0 }}>Employee Accounts</h3>
                   <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", marginBottom: 16 }}>
