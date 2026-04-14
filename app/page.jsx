@@ -753,56 +753,92 @@ export default function Page() {
                       <option value="closed">Closed only</option>
                     </select>
                   </div>
-                  {filteredEntries.length === 0
+                  {editingShiftId && (
+                    <div style={{ ...cardStyle(), marginBottom: 16, border: "2px solid #ffd700" }}>
+                      <div style={{ fontWeight: 700, marginBottom: 12 }}>✏️ Edit Shift</div>
+                      <div style={{ display: "grid", gap: 10 }}>
+                        <div>
+                          <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock In</div>
+                          <input style={inputStyle()} type="datetime-local" value={editingShiftClockIn} onChange={ev => setEditingShiftClockIn(ev.target.value)} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock Out (leave empty if still in)</div>
+                          <input style={inputStyle()} type="datetime-local" value={editingShiftClockOut} onChange={ev => setEditingShiftClockOut(ev.target.value)} />
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          <button style={buttonStyle()} onClick={() => saveEditShift(editingShiftId)}>Save</button>
+                          <button style={buttonStyle("ghost")} onClick={() => setEditingShiftId("")}>Cancel</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                     ? <div style={{ color: "#6b7280", padding: "8px 0" }}>No shift records yet.</div>
                     : <>
 
                         <div style={{ display: "grid", gap: 10 }}>
-                          {filteredEntries.map(e => (
-                            <div key={e.id} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
-                              {editingShiftId === e.id ? (
-                                <div style={{ display: "grid", gap: 10 }}>
-                                  <div style={{ fontWeight: 700, marginBottom: 4 }}>Edit Shift — {e.employeeName}</div>
-                                  <div>
-                                    <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock In</div>
-                                    <input style={inputStyle()} type="datetime-local" value={editingShiftClockIn} onChange={ev => setEditingShiftClockIn(ev.target.value)} />
-                                  </div>
-                                  <div>
-                                    <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock Out (leave empty if still in)</div>
-                                    <input style={inputStyle()} type="datetime-local" value={editingShiftClockOut} onChange={ev => setEditingShiftClockOut(ev.target.value)} />
-                                  </div>
-                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                                    <button style={buttonStyle()} onClick={() => saveEditShift(e.id)}>Save</button>
-                                    <button style={buttonStyle("ghost")} onClick={() => setEditingShiftId("")}>Cancel</button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <>
-                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                                    <div style={{ fontWeight: 700, fontSize: 16 }}>{e.employeeName}</div>
-                                    <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{e.role}</span>
-                                  </div>
-                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 13 }}>
+                          {(() => {
+                            // Group shifts by employee + date
+                            const grouped = {};
+                            filteredEntries.forEach(e => {
+                              const dateKey = formatDateNZ(e.clockIn);
+                              const key = `${e.employeeId}_${dateKey}`;
+                              if (!grouped[key]) {
+                                grouped[key] = {
+                                  employeeId: e.employeeId,
+                                  employeeName: e.employeeName,
+                                  role: e.role,
+                                  date: dateKey,
+                                  shifts: [],
+                                  totalHours: 0,
+                                  sortValue: new Date(e.clockIn).getTime(),
+                                };
+                              }
+                              grouped[key].shifts.push(e);
+                              grouped[key].totalHours += e.totalHours || 0;
+                            });
+                            return Object.values(grouped)
+                              .sort((a, b) => b.sortValue - a.sortValue)
+                              .map(group => (
+                                <div key={`${group.employeeId}_${group.date}`} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                                     <div>
-                                      <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock In</div>
-                                      <div style={{ fontWeight: 600 }}>{formatDateTimeNZ(e.clockIn)}</div>
+                                      <div style={{ fontWeight: 700, fontSize: 16 }}>{group.employeeName}</div>
+                                      <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>{group.date}</div>
                                     </div>
-                                    <div>
-                                      <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock Out</div>
-                                      <div style={{ fontWeight: 600 }}>{e.clockOut ? formatDateTimeNZ(e.clockOut) : "🟢 Still in"}</div>
-                                    </div>
+                                    <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{group.role}</span>
                                   </div>
-                                  {e.totalHours != null && (
-                                    <div style={{ marginTop: 8, fontSize: 13, color: "#6b7280" }}>Total: <strong>{e.totalHours.toFixed(2)} hrs</strong></div>
+                                  {group.shifts.map((e, i) => (
+                                    <div key={e.id}>
+                                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 13, marginBottom: 6 }}>
+                                        <div>
+                                          <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock In</div>
+                                          <div style={{ fontWeight: 600 }}>{new Date(e.clockIn).toLocaleTimeString("en-NZ", { timeZone: NZ_TIMEZONE, hour: "2-digit", minute: "2-digit", hour12: true })}</div>
+                                        </div>
+                                        <div>
+                                          <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock Out</div>
+                                          <div style={{ fontWeight: 600 }}>{e.clockOut ? new Date(e.clockOut).toLocaleTimeString("en-NZ", { timeZone: NZ_TIMEZONE, hour: "2-digit", minute: "2-digit", hour12: true }) : "🟢 Still in"}</div>
+                                        </div>
+                                      </div>
+                                      {e.totalHours != null && (
+                                        <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>
+                                          Shift {i + 1}: <strong>{e.totalHours.toFixed(2)} hrs</strong>
+                                        </div>
+                                      )}
+                                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: group.shifts.length > 1 && i < group.shifts.length - 1 ? 12 : 0 }}>
+                                        <button style={buttonStyle("secondary")} onClick={() => startEditShift(e)}>✏️ Edit</button>
+                                        <button style={buttonStyle("danger")} onClick={() => deleteShift(e.id)}>🗑️ Delete</button>
+                                      </div>
+                                      {i < group.shifts.length - 1 && <div style={{ borderTop: "1px dashed #e5e7eb", margin: "10px 0" }} />}
+                                    </div>
+                                  ))}
+                                  {group.shifts.length > 1 && (
+                                    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #e5e7eb", fontSize: 13, fontWeight: 700, color: "#111827" }}>
+                                      Day Total: {group.totalHours.toFixed(2)} hrs
+                                    </div>
                                   )}
-                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
-                                    <button style={buttonStyle("secondary")} onClick={() => startEditShift(e)}>✏️ Edit</button>
-                                    <button style={buttonStyle("danger")} onClick={() => deleteShift(e.id)}>🗑️ Delete</button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          ))}
+                                </div>
+                              ));
+                          })()}
                         </div>
                         <div style={{ marginTop: 14, padding: 14, background: "#111827", borderRadius: 14, color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div style={{ fontSize: 14 }}>Total Hours (this period)</div>
