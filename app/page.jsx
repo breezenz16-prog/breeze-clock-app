@@ -489,7 +489,35 @@ export default function Page() {
     } catch (err) { setMessage("Error updating timesheet."); }
   }
 
-  if (loading) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Arial", fontSize: 18 }}>Loading Breeze...</div>;
+  if (loading) return (
+    <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "Arial" }}>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.08); opacity: 0.85; }
+        }
+        @keyframes fadeInUp {
+          0% { opacity: 0; transform: translateY(16px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes dot {
+          0%, 80%, 100% { opacity: 0; }
+          40% { opacity: 1; }
+        }
+        .dot1 { animation: dot 1.4s infinite 0s; }
+        .dot2 { animation: dot 1.4s infinite 0.2s; }
+        .dot3 { animation: dot 1.4s infinite 0.4s; }
+      `}</style>
+      <div style={{ animation: "pulse 2s ease-in-out infinite", width: 90, height: 90, borderRadius: 24, background: "linear-gradient(135deg, #b8860b, #ffd700, #b8860b)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 48, color: "#000", boxShadow: "0 0 40px rgba(255,215,0,0.4)", marginBottom: 24 }}>B</div>
+      <div style={{ animation: "fadeInUp 0.8s ease forwards", color: "#fff", fontSize: 32, fontWeight: 900, letterSpacing: 2, marginBottom: 6 }}>Breeze</div>
+      <div style={{ animation: "fadeInUp 1s ease forwards", color: "#ffd700", fontStyle: "italic", fontSize: 15, marginBottom: 32 }}>Indian Restaurant</div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <span className="dot1" style={{ width: 10, height: 10, borderRadius: "50%", background: "#ffd700", display: "inline-block" }} />
+        <span className="dot2" style={{ width: 10, height: 10, borderRadius: "50%", background: "#ffd700", display: "inline-block" }} />
+        <span className="dot3" style={{ width: 10, height: 10, borderRadius: "50%", background: "#ffd700", display: "inline-block" }} />
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ minHeight: "100vh", background: "#111827", padding: 16, fontFamily: "Arial, sans-serif", color: "#111827" }}>
