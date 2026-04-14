@@ -1,4 +1,4 @@
-"use client"; 
+"use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { initializeApp } from "firebase/app";
 import {
@@ -681,7 +681,7 @@ export default function Page() {
                 </div>
               </div>
             ) : (
-              <>
+              <div>
                 <div style={{ display: "flex", justifyContent: "center" }}><button style={{ ...buttonStyle("danger"), minWidth: 180 }} onClick={handleAdminLogout}>Log Out (Admin)</button></div>
                 <div style={cardStyle()}>
                   <h3 style={{ marginTop: 0 }}>Employee Accounts</h3>
@@ -711,7 +711,7 @@ export default function Page() {
                             </div>
                           </div>
                         ) : (
-                          <>
+                          <div>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                               <div style={{ fontWeight: 700, fontSize: 16 }}>{emp.name}</div>
                               <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{emp.role}</span>
@@ -775,6 +775,7 @@ export default function Page() {
                     ? <div style={{ color: "#6b7280", padding: "8px 0" }}>No shift records yet.</div>
                     : <>
 
+                        <div>
                         <div style={{ display: "grid", gap: 10 }}>
                           {(() => {
                             // Group shifts by employee + date
@@ -844,9 +845,11 @@ export default function Page() {
                           <div style={{ fontSize: 14 }}>Total Hours (this period)</div>
                           <div style={{ fontSize: 24, fontWeight: 700, color: "#ffd700" }}>{filteredEntries.reduce((s, e) => s + (e.totalHours || 0), 0).toFixed(2)} hrs</div>
                         </div>
+                        </div>
                         <button style={{ ...buttonStyle(), background: "linear-gradient(135deg, #b8860b, #ffd700)", color: "#000", width: "100%", marginTop: 10, fontWeight: 800 }} onClick={downloadTimesheetCSV}>
                           ⬇️ Download Timesheet CSV for Xero
                         </button>
+                        </div>
                       </>
                   }
                 </div>
@@ -893,7 +896,7 @@ export default function Page() {
                   }
                 </div>
 
-              </>
+              </div>
             )}
           </div>
         )}
