@@ -555,38 +555,50 @@ export default function Page() {
                       {roleOptions.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </div>
-                  <button style={buttonStyle()} onClick={handleAddEmployee}>Add Employee</button>
-                  <div style={{ overflowX: "auto", marginTop: 16 }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                      <thead><tr>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Name</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Email</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Role</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Edit</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Password</th>
-                        <th style={{ textAlign: "right", padding: "8px 0" }}>Remove</th>
-                      </tr></thead>
-                      <tbody>
-                        {employees.filter(e => e.active !== false).map(emp => (
-                          <tr key={emp.id}>
-                            <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{editingEmployeeId === emp.id ? <input style={inputStyle()} value={editingEmployeeName} onChange={e => setEditingEmployeeName(e.target.value)} /> : emp.name}</td>
-                            <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{editingEmployeeId === emp.id ? <input style={inputStyle()} value={editingEmployeeEmail} onChange={e => setEditingEmployeeEmail(e.target.value)} /> : emp.email}</td>
-                            <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{editingEmployeeId === emp.id ? <select style={inputStyle()} value={editingEmployeeRole} onChange={e => setEditingEmployeeRole(e.target.value)}>{roleOptions.map(r => <option key={r} value={r}>{r}</option>)}</select> : emp.role}</td>
-                            <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>
-                              {editingEmployeeId === emp.id
-                                ? <div style={{ display: "flex", gap: 8 }}><button style={buttonStyle("secondary")} onClick={() => saveEditEmployee(emp.id)}>Save</button><button style={buttonStyle("ghost")} onClick={() => setEditingEmployeeId("")}>Cancel</button></div>
-                                : <button style={buttonStyle("secondary")} onClick={() => startEditEmployee(emp)}>Edit</button>}
-                            </td>
-                            <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>
-                              {resetPasswordEmployeeId === emp.id
-                                ? <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><input style={{ ...inputStyle(), maxWidth: 140 }} value={resetPasswordValue} onChange={e => setResetPasswordValue(e.target.value)} placeholder="New password" /><button style={buttonStyle("secondary")} onClick={() => saveResetPassword(emp.id)}>Save</button><button style={buttonStyle("ghost")} onClick={() => setResetPasswordEmployeeId("")}>Cancel</button></div>
-                                : <button style={buttonStyle("secondary")} onClick={() => { setResetPasswordEmployeeId(emp.id); setResetPasswordValue(emp.password || ""); }}>Reset Password</button>}
-                            </td>
-                            <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb", textAlign: "right" }}><button style={buttonStyle("danger")} onClick={() => removeEmployee(emp.id)}>Remove</button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <button style={{ ...buttonStyle(), width: "100%" }} onClick={handleAddEmployee}>Add Employee</button>
+
+                  <div style={{ display: "grid", gap: 12, marginTop: 16 }}>
+                    {employees.filter(e => e.active !== false).map(emp => (
+                      <div key={emp.id} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
+                        {editingEmployeeId === emp.id ? (
+                          <div style={{ display: "grid", gap: 10 }}>
+                            <input style={inputStyle()} value={editingEmployeeName} onChange={e => setEditingEmployeeName(e.target.value)} placeholder="Name" />
+                            <input style={inputStyle()} value={editingEmployeeEmail} onChange={e => setEditingEmployeeEmail(e.target.value)} placeholder="Email" />
+                            <select style={inputStyle()} value={editingEmployeeRole} onChange={e => setEditingEmployeeRole(e.target.value)}>
+                              {roleOptions.map(r => <option key={r} value={r}>{r}</option>)}
+                            </select>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                              <button style={buttonStyle()} onClick={() => saveEditEmployee(emp.id)}>Save</button>
+                              <button style={buttonStyle("ghost")} onClick={() => setEditingEmployeeId("")}>Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                              <div style={{ fontWeight: 700, fontSize: 16 }}>{emp.name}</div>
+                              <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{emp.role}</span>
+                            </div>
+                            <div style={{ color: "#6b7280", fontSize: 13, marginBottom: 12, wordBreak: "break-all" }}>{emp.email}</div>
+
+                            {resetPasswordEmployeeId === emp.id ? (
+                              <div style={{ display: "grid", gap: 8 }}>
+                                <input style={inputStyle()} value={resetPasswordValue} onChange={e => setResetPasswordValue(e.target.value)} placeholder="New password" />
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                                  <button style={buttonStyle()} onClick={() => saveResetPassword(emp.id)}>Save</button>
+                                  <button style={buttonStyle("ghost")} onClick={() => setResetPasswordEmployeeId("")}>Cancel</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                                <button style={buttonStyle("secondary")} onClick={() => startEditEmployee(emp)}>Edit</button>
+                                <button style={buttonStyle("secondary")} onClick={() => { setResetPasswordEmployeeId(emp.id); setResetPasswordValue(emp.password || ""); }}>Reset PW</button>
+                                <button style={buttonStyle("danger")} onClick={() => removeEmployee(emp.id)}>Remove</button>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
