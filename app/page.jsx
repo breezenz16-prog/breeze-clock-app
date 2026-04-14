@@ -21,6 +21,8 @@ const db = getFirestore(app);
 const ADMIN_EMAIL = "breezenz16@gmail.com";
 const DEFAULT_ADMIN_PASSWORD = "02041462704";
 const NZ_TIMEZONE = "Pacific/Auckland";
+const ADMIN_IDLE_TIMEOUT_MS = 10 * 60 * 1000;
+
 // EmailJS config
 const EMAILJS_SERVICE_ID = "service_22q7wqe";
 const EMAILJS_TEMPLATE_ID = "template_9npp595";
