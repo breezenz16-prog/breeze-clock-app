@@ -601,11 +601,7 @@ export default function Page() {
                     ))}
                   </div>
                 </div>
-                <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
-                  <div style={cardStyle()}><div style={{ color: "#6b7280" }}>Total Recorded Shifts</div><div style={{ fontSize: 32, fontWeight: 700, marginTop: 8 }}>{entries.length}</div></div>
-                  <div style={cardStyle()}><div style={{ color: "#6b7280" }}>Open Shifts</div><div style={{ fontSize: 32, fontWeight: 700, marginTop: 8 }}>{entries.filter(e => !e.clockOut).length}</div></div>
-                  <div style={cardStyle()}><div style={{ color: "#6b7280" }}>Total Hours</div><div style={{ fontSize: 32, fontWeight: 700, marginTop: 8 }}>{entries.reduce((s, e) => s + (e.totalHours || 0), 0).toFixed(2)}</div></div>
-                </div>
+
                 <div style={cardStyle()}>
                   <h3 style={{ margin: "0 0 12px 0" }}>Admin View</h3>
                   <div style={{ color: "#6b7280", marginBottom: 12, fontSize: 13 }}>Live shifts from all devices 🔥</div>
@@ -621,31 +617,37 @@ export default function Page() {
                   </div>
                   {filteredEntries.length === 0
                     ? <div style={{ color: "#6b7280", padding: "8px 0" }}>No shift records yet.</div>
-                    : <div style={{ display: "grid", gap: 10 }}>
-                        {filteredEntries.map(e => (
-                          <div key={e.id} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                              <div style={{ fontWeight: 700, fontSize: 16 }}>{e.employeeName}</div>
-                              <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{e.role}</span>
+                    : <>
+                        <div style={{ display: "grid", gap: 10 }}>
+                          {filteredEntries.map(e => (
+                            <div key={e.id} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                                <div style={{ fontWeight: 700, fontSize: 16 }}>{e.employeeName}</div>
+                                <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{e.role}</span>
+                              </div>
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 13 }}>
+                                <div>
+                                  <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock In</div>
+                                  <div style={{ fontWeight: 600 }}>{formatDateTimeNZ(e.clockIn)}</div>
+                                </div>
+                                <div>
+                                  <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock Out</div>
+                                  <div style={{ fontWeight: 600 }}>{e.clockOut ? formatDateTimeNZ(e.clockOut) : "🟢 Still in"}</div>
+                                </div>
+                              </div>
+                              {e.totalHours != null && (
+                                <div style={{ marginTop: 8, fontSize: 13, color: "#6b7280" }}>
+                                  Total: <strong>{e.totalHours.toFixed(2)} hrs</strong>
+                                </div>
+                              )}
                             </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 13 }}>
-                              <div>
-                                <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock In</div>
-                                <div style={{ fontWeight: 600 }}>{formatDateTimeNZ(e.clockIn)}</div>
-                              </div>
-                              <div>
-                                <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock Out</div>
-                                <div style={{ fontWeight: 600 }}>{e.clockOut ? formatDateTimeNZ(e.clockOut) : "🟢 Still in"}</div>
-                              </div>
-                            </div>
-                            {e.totalHours != null && (
-                              <div style={{ marginTop: 8, fontSize: 13, color: "#6b7280" }}>
-                                Total: <strong>{e.totalHours.toFixed(2)} hrs</strong>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                        <div style={{ marginTop: 14, padding: 14, background: "#111827", borderRadius: 14, color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div style={{ fontSize: 14 }}>Total Hours (this period)</div>
+                          <div style={{ fontSize: 24, fontWeight: 700 }}>{filteredEntries.reduce((s, e) => s + (e.totalHours || 0), 0).toFixed(2)} hrs</div>
+                        </div>
+                      </>
                   }
                 </div>
                 <div style={cardStyle()}>
@@ -714,36 +716,7 @@ export default function Page() {
                       </div>
                   }
                 </div>
-                <div style={cardStyle()}>
-                  <h3 style={{ marginTop: 0 }}>Employee Summary</h3>
-                  <div style={{ display: "grid", gap: 10 }}>
-                    {employeeSummary.length === 0
-                      ? <div style={{ color: "#6b7280" }}>No summary available yet.</div>
-                      : employeeSummary.map(row => (
-                          <div key={row.employeeName} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                              <div style={{ fontWeight: 700 }}>{row.employeeName}</div>
-                              <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{row.role}</span>
-                            </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, fontSize: 13, textAlign: "center" }}>
-                              <div style={{ background: "#f3f4f6", borderRadius: 10, padding: "8px 4px" }}>
-                                <div style={{ fontWeight: 700, fontSize: 18 }}>{row.shifts}</div>
-                                <div style={{ color: "#6b7280" }}>Shifts</div>
-                              </div>
-                              <div style={{ background: "#f3f4f6", borderRadius: 10, padding: "8px 4px" }}>
-                                <div style={{ fontWeight: 700, fontSize: 18 }}>{row.open}</div>
-                                <div style={{ color: "#6b7280" }}>Open</div>
-                              </div>
-                              <div style={{ background: "#f3f4f6", borderRadius: 10, padding: "8px 4px" }}>
-                                <div style={{ fontWeight: 700, fontSize: 18 }}>{row.hours.toFixed(1)}</div>
-                                <div style={{ color: "#6b7280" }}>Hours</div>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                    }
-                  </div>
-                </div>
+
               </>
             )}
           </div>
