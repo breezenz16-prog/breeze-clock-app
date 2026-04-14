@@ -37,7 +37,7 @@ function nowIso() { return new Date().toISOString(); }
 function formatDateTimeNZ(value) {
   return new Date(value).toLocaleString("en-NZ", {
     timeZone: NZ_TIMEZONE, year: "numeric", month: "2-digit",
-    day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false,
+    day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: true,
   });
 }
 
@@ -607,155 +607,141 @@ export default function Page() {
                   <div style={cardStyle()}><div style={{ color: "#6b7280" }}>Total Hours</div><div style={{ fontSize: 32, fontWeight: 700, marginTop: 8 }}>{entries.reduce((s, e) => s + (e.totalHours || 0), 0).toFixed(2)}</div></div>
                 </div>
                 <div style={cardStyle()}>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "space-between", alignItems: "center" }}>
-                    <div><h3 style={{ margin: 0 }}>Admin View</h3><div style={{ color: "#6b7280", marginTop: 4 }}>Live shifts from all devices 🔥</div></div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <select style={inputStyle()} value={selectedAdminFortnight} onChange={e => setSelectedAdminFortnight(e.target.value)}>
-                        {fortnightOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      </select>
-                      <select style={inputStyle()} value={adminFilter} onChange={e => setAdminFilter(e.target.value)}>
-                        <option value="all">All shifts</option>
-                        <option value="open">Open only</option>
-                        <option value="closed">Closed only</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div style={{ overflowX: "auto", marginTop: 14 }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                      <thead><tr>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Employee</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Role</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Clock In</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Clock Out</th>
-                        <th style={{ textAlign: "right", padding: "8px 0" }}>Hours</th>
-                      </tr></thead>
-                      <tbody>
-                        {filteredEntries.length === 0
-                          ? <tr><td colSpan={5} style={{ padding: "8px 0", color: "#6b7280" }}>No shift records yet.</td></tr>
-                          : filteredEntries.map(e => (
-                            <tr key={e.id}>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{e.employeeName}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{e.role}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{formatDateTimeNZ(e.clockIn)}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{e.clockOut ? formatDateTimeNZ(e.clockOut) : "🟢 Still clocked in"}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb", textAlign: "right" }}>{e.totalHours != null ? e.totalHours.toFixed(2) : "—"}</td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <div style={cardStyle()}>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "space-between", alignItems: "center" }}>
-                    <div><h3 style={{ margin: 0 }}>Leave Requests</h3><div style={{ color: "#6b7280", marginTop: 4 }}>Approve or reject staff leave requests</div></div>
-                    <select style={inputStyle()} value={leaveStatusFilter} onChange={e => setLeaveStatusFilter(e.target.value)}>
-                      <option value="all">All requests</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+                  <h3 style={{ margin: "0 0 12px 0" }}>Admin View</h3>
+                  <div style={{ color: "#6b7280", marginBottom: 12, fontSize: 13 }}>Live shifts from all devices 🔥</div>
+                  <div style={{ display: "grid", gap: 8, marginBottom: 16 }}>
+                    <select style={inputStyle()} value={selectedAdminFortnight} onChange={e => setSelectedAdminFortnight(e.target.value)}>
+                      {fortnightOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                    <select style={inputStyle()} value={adminFilter} onChange={e => setAdminFilter(e.target.value)}>
+                      <option value="all">All shifts</option>
+                      <option value="open">Open only</option>
+                      <option value="closed">Closed only</option>
                     </select>
                   </div>
-                  <div style={{ overflowX: "auto", marginTop: 14 }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                      <thead><tr>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Employee</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Type</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Start</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>End</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Reason</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Status</th>
-                        <th style={{ textAlign: "right", padding: "8px 0" }}>Actions</th>
-                      </tr></thead>
-                      <tbody>
-                        {filteredLeaveRequests.length === 0
-                          ? <tr><td colSpan={7} style={{ padding: "8px 0", color: "#6b7280" }}>No leave requests yet.</td></tr>
-                          : filteredLeaveRequests.map(r => (
-                            <tr key={r.id}>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{r.employeeName}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb", textTransform: "capitalize" }}>{r.type}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{r.startDate}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{r.endDate}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{r.reason || "—"}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{r.status}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb", textAlign: "right" }}>
-                                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
-                                  <button style={buttonStyle()} onClick={() => updateLeaveStatus(r.id, "Approved")}>Approve</button>
-                                  <button style={buttonStyle("secondary")} onClick={() => updateLeaveStatus(r.id, "Rejected")}>Reject</button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  {filteredEntries.length === 0
+                    ? <div style={{ color: "#6b7280", padding: "8px 0" }}>No shift records yet.</div>
+                    : <div style={{ display: "grid", gap: 10 }}>
+                        {filteredEntries.map(e => (
+                          <div key={e.id} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                              <div style={{ fontWeight: 700, fontSize: 16 }}>{e.employeeName}</div>
+                              <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{e.role}</span>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 13 }}>
+                              <div>
+                                <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock In</div>
+                                <div style={{ fontWeight: 600 }}>{formatDateTimeNZ(e.clockIn)}</div>
+                              </div>
+                              <div>
+                                <div style={{ color: "#6b7280", marginBottom: 2 }}>Clock Out</div>
+                                <div style={{ fontWeight: 600 }}>{e.clockOut ? formatDateTimeNZ(e.clockOut) : "🟢 Still in"}</div>
+                              </div>
+                            </div>
+                            {e.totalHours != null && (
+                              <div style={{ marginTop: 8, fontSize: 13, color: "#6b7280" }}>
+                                Total: <strong>{e.totalHours.toFixed(2)} hrs</strong>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                  }
                 </div>
                 <div style={cardStyle()}>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "space-between", alignItems: "center" }}>
-                    <div><h3 style={{ margin: 0 }}>Timesheet Approvals</h3><div style={{ color: "#6b7280", marginTop: 4 }}>Review and approve submitted timesheets</div></div>
-                    <select style={inputStyle()} value={timesheetStatusFilter} onChange={e => setTimesheetStatusFilter(e.target.value)}>
-                      <option value="all">All timesheets</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
-                    </select>
-                  </div>
-                  <div style={{ overflowX: "auto", marginTop: 14 }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                      <thead><tr>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Employee</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Period</th>
-                        <th style={{ textAlign: "right", padding: "8px 0" }}>Hours</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Submitted</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Status</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Edit Hours</th>
-                        <th style={{ textAlign: "right", padding: "8px 0" }}>Actions</th>
-                      </tr></thead>
-                      <tbody>
-                        {filteredTimesheetSubmissions.length === 0
-                          ? <tr><td colSpan={7} style={{ padding: "8px 0", color: "#6b7280" }}>No submitted timesheets yet.</td></tr>
-                          : filteredTimesheetSubmissions.map(item => (
-                            <tr key={item.id}>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{item.employeeName}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{item.period}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb", textAlign: "right" }}>{item.hours.toFixed(2)}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{formatDateTimeNZ(item.submittedAt)}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{item.status}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>
-                                {editingTimesheetId === item.id
-                                  ? <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><input style={{ ...inputStyle(), maxWidth: 120 }} type="number" step="0.01" min="0" value={editingTimesheetHours} onChange={e => setEditingTimesheetHours(e.target.value)} /><button style={buttonStyle("secondary")} onClick={() => saveEditTimesheet(item.id)}>Save</button><button style={buttonStyle("ghost")} onClick={() => setEditingTimesheetId("")}>Cancel</button></div>
-                                  : <button style={buttonStyle("secondary")} onClick={() => { setEditingTimesheetId(item.id); setEditingTimesheetHours(String(item.hours.toFixed(2))); }}>Edit</button>}
-                              </td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb", textAlign: "right" }}>
-                                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
-                                  <button style={buttonStyle()} onClick={() => updateTimesheetStatus(item.id, "Approved")}>Approve</button>
-                                  <button style={buttonStyle("secondary")} onClick={() => updateTimesheetStatus(item.id, "Rejected")}>Reject</button>
+                  <h3 style={{ margin: "0 0 4px 0" }}>Leave Requests</h3>
+                  <div style={{ color: "#6b7280", fontSize: 13, marginBottom: 12 }}>Approve or reject staff leave requests</div>
+                  <select style={{ ...inputStyle(), marginBottom: 16 }} value={leaveStatusFilter} onChange={e => setLeaveStatusFilter(e.target.value)}>
+                    <option value="all">All requests</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+                  </select>
+                  {filteredLeaveRequests.length === 0
+                    ? <div style={{ color: "#6b7280" }}>No leave requests yet.</div>
+                    : <div style={{ display: "grid", gap: 10 }}>
+                        {filteredLeaveRequests.map(r => (
+                          <div key={r.id} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                              <div style={{ fontWeight: 700 }}>{r.employeeName}</div>
+                              <span style={{ background: r.status === "Approved" ? "#065f46" : r.status === "Rejected" ? "#991b1b" : "#92400e", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12, textTransform: "capitalize" }}>{r.status}</span>
+                            </div>
+                            <div style={{ fontSize: 13, marginBottom: 6 }}>
+                              <span style={{ textTransform: "capitalize", fontWeight: 600 }}>{r.type}</span> · {r.startDate} → {r.endDate}
+                            </div>
+                            {r.reason && <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 10 }}>{r.reason}</div>}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                              <button style={buttonStyle()} onClick={() => updateLeaveStatus(r.id, "Approved")}>Approve</button>
+                              <button style={buttonStyle("secondary")} onClick={() => updateLeaveStatus(r.id, "Rejected")}>Reject</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                  }
+                </div>
+                <div style={cardStyle()}>
+                  <h3 style={{ margin: "0 0 4px 0" }}>Timesheet Approvals</h3>
+                  <div style={{ color: "#6b7280", fontSize: 13, marginBottom: 12 }}>Review and approve submitted timesheets</div>
+                  <select style={{ ...inputStyle(), marginBottom: 16 }} value={timesheetStatusFilter} onChange={e => setTimesheetStatusFilter(e.target.value)}>
+                    <option value="all">All timesheets</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+                  </select>
+                  {filteredTimesheetSubmissions.length === 0
+                    ? <div style={{ color: "#6b7280" }}>No submitted timesheets yet.</div>
+                    : <div style={{ display: "grid", gap: 10 }}>
+                        {filteredTimesheetSubmissions.map(item => (
+                          <div key={item.id} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                              <div style={{ fontWeight: 700 }}>{item.employeeName}</div>
+                              <span style={{ background: item.status === "Approved" ? "#065f46" : item.status === "Rejected" ? "#991b1b" : "#92400e", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{item.status}</span>
+                            </div>
+                            <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>{item.period}</div>
+                            <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{item.hours.toFixed(2)} hrs</div>
+                            <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>Submitted: {formatDateTimeNZ(item.submittedAt)}</div>
+                            {editingTimesheetId === item.id ? (
+                              <div style={{ display: "grid", gap: 8, marginBottom: 10 }}>
+                                <input style={inputStyle()} type="number" step="0.01" min="0" value={editingTimesheetHours} onChange={e => setEditingTimesheetHours(e.target.value)} placeholder="Edit hours" />
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                                  <button style={buttonStyle()} onClick={() => saveEditTimesheet(item.id)}>Save</button>
+                                  <button style={buttonStyle("ghost")} onClick={() => setEditingTimesheetId("")}>Cancel</button>
                                 </div>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
+                              </div>
+                            ) : (
+                              <button style={{ ...buttonStyle("ghost"), width: "100%", marginBottom: 8 }} onClick={() => { setEditingTimesheetId(item.id); setEditingTimesheetHours(String(item.hours.toFixed(2))); }}>Edit Hours</button>
+                            )}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                              <button style={buttonStyle()} onClick={() => updateTimesheetStatus(item.id, "Approved")}>Approve</button>
+                              <button style={buttonStyle("secondary")} onClick={() => updateTimesheetStatus(item.id, "Rejected")}>Reject</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                  }
                 </div>
                 <div style={cardStyle()}>
                   <h3 style={{ marginTop: 0 }}>Employee Summary</h3>
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                      <thead><tr>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Employee</th>
-                        <th style={{ textAlign: "left", padding: "8px 0" }}>Role</th>
-                        <th style={{ textAlign: "right", padding: "8px 0" }}>Shifts</th>
-                        <th style={{ textAlign: "right", padding: "8px 0" }}>Open</th>
-                        <th style={{ textAlign: "right", padding: "8px 0" }}>Hours</th>
-                      </tr></thead>
-                      <tbody>
-                        {employeeSummary.length === 0
-                          ? <tr><td colSpan={5} style={{ padding: "8px 0", color: "#6b7280" }}>No summary available yet.</td></tr>
-                          : employeeSummary.map(row => (
-                            <tr key={row.employeeName}>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{row.employeeName}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>{row.role}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb", textAlign: "right" }}>{row.shifts}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb", textAlign: "right" }}>{row.open}</td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb", textAlign: "right" }}>{row.hours.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {employeeSummary.length === 0
+                      ? <div style={{ color: "#6b7280" }}>No summary available yet.</div>
+                      : employeeSummary.map(row => (
+                          <div key={row.employeeName} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                              <div style={{ fontWeight: 700 }}>{row.employeeName}</div>
+                              <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{row.role}</span>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, fontSize: 13, textAlign: "center" }}>
+                              <div style={{ background: "#f3f4f6", borderRadius: 10, padding: "8px 4px" }}>
+                                <div style={{ fontWeight: 700, fontSize: 18 }}>{row.shifts}</div>
+                                <div style={{ color: "#6b7280" }}>Shifts</div>
+                              </div>
+                              <div style={{ background: "#f3f4f6", borderRadius: 10, padding: "8px 4px" }}>
+                                <div style={{ fontWeight: 700, fontSize: 18 }}>{row.open}</div>
+                                <div style={{ color: "#6b7280" }}>Open</div>
+                              </div>
+                              <div style={{ background: "#f3f4f6", borderRadius: 10, padding: "8px 4px" }}>
+                                <div style={{ fontWeight: 700, fontSize: 18 }}>{row.hours.toFixed(1)}</div>
+                                <div style={{ color: "#6b7280" }}>Hours</div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                    }
                   </div>
                 </div>
               </>
