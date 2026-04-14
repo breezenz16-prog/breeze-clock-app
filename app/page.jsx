@@ -773,7 +773,7 @@ export default function Page() {
                     </div>
                   )}
                     ? <div style={{ color: "#6b7280", padding: "8px 0" }}>No shift records yet.</div>
-                    : <>
+                    : <div>
 
                         <div>
                         <div style={{ display: "grid", gap: 10 }}>
