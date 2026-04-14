@@ -731,28 +731,7 @@ export default function Page() {
                   {filteredEntries.length === 0
                     ? <div style={{ color: "#6b7280", padding: "8px 0" }}>No shift records yet.</div>
                     : <>
-                        {/* Per employee totals */}
-                        {(() => {
-                          const empTotals = {};
-                          filteredEntries.forEach(e => {
-                            if (!empTotals[e.employeeName]) empTotals[e.employeeName] = { role: e.role, hours: 0, open: 0 };
-                            empTotals[e.employeeName].hours += e.totalHours || 0;
-                            if (!e.clockOut) empTotals[e.employeeName].open++;
-                          });
-                          return (
-                            <div style={{ display: "grid", gap: 8, marginBottom: 14 }}>
-                              {Object.entries(empTotals).map(([name, data]) => (
-                                <div key={name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#1f2937", borderRadius: 12, padding: "10px 14px" }}>
-                                  <div>
-                                    <div style={{ fontWeight: 700, color: "#fff" }}>{name}</div>
-                                    <div style={{ fontSize: 12, color: "#9ca3af" }}>{data.role}{data.open > 0 ? ` · 🟢 ${data.open} open` : ""}</div>
-                                  </div>
-                                  <div style={{ fontWeight: 900, fontSize: 20, color: "#ffd700" }}>{data.hours.toFixed(2)} hrs</div>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })()}
+
                         <div style={{ display: "grid", gap: 10 }}>
                           {filteredEntries.map(e => (
                             <div key={e.id} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
