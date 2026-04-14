@@ -733,7 +733,7 @@ export default function Page() {
                                 <button style={buttonStyle("danger")} onClick={() => removeEmployee(emp.id)}>Remove</button>
                               </div>
                             )}
-                          </>
+                          </div>
                         )}
                       </div>
                     ))}
