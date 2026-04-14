@@ -21,7 +21,36 @@ const db = getFirestore(app);
 const ADMIN_EMAIL = "breezenz16@gmail.com";
 const DEFAULT_ADMIN_PASSWORD = "02041462704";
 const NZ_TIMEZONE = "Pacific/Auckland";
-const ADMIN_IDLE_TIMEOUT_MS = 10 * 60 * 1000;
+// EmailJS config
+const EMAILJS_SERVICE_ID = "service_22q7wqe";
+const EMAILJS_TEMPLATE_ID = "template_9npp595";
+const EMAILJS_PUBLIC_KEY = "0Gyw2c9jKIx3MCFKx";
+
+async function sendEmailNotification(staffName, role, action) {
+  try {
+    const time = new Date().toLocaleString("en-NZ", {
+      timeZone: NZ_TIMEZONE, hour: "2-digit", minute: "2-digit",
+      hour12: true, weekday: "short", day: "numeric", month: "short"
+    });
+    await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_TEMPLATE_ID,
+        user_id: EMAILJS_PUBLIC_KEY,
+        template_params: {
+          staff_name: staffName,
+          role: role,
+          action: action,
+          time: time,
+        },
+      }),
+    });
+  } catch (err) {
+    console.error("Email notification failed:", err);
+  }
+}
 
 // 📍 Breeze Restaurant location - 16 Hood St, Hamilton Central
 const RESTAURANT_LAT = -37.7870;
@@ -440,7 +469,6 @@ export default function Page() {
       setMessage(`Timesheet ${status.toLowerCase()}. ✅`);
     } catch (err) { setMessage("Error updating timesheet."); }
   }
-
   async function saveEditTimesheet(subId) {
     const parsedHours = Number(editingTimesheetHours);
     if (isNaN(parsedHours) || parsedHours < 0) { setMessage("Please enter valid hours."); return; }
@@ -753,6 +781,9 @@ export default function Page() {
                               <button style={buttonStyle()} onClick={() => updateTimesheetStatus(item.id, "Approved")}>Approve</button>
                               <button style={buttonStyle("secondary")} onClick={() => updateTimesheetStatus(item.id, "Rejected")}>Reject</button>
                             </div>
+                            {(item.status === "Approved" || item.status === "Rejected") && (
+                              <button style={{ ...buttonStyle("ghost"), width: "100%", marginTop: 8 }} onClick={() => updateTimesheetStatus(item.id, "Pending")}>↩️ Undo — Reset to Pending</button>
+                            )}
                           </div>
                         ))}
                       </div>
