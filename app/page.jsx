@@ -849,10 +849,8 @@ export default function Page() {
                           ⬇️ Download Timesheet CSV for Xero
                         </button>
                         </div>
-                      </div>
-                  )}
+                        )}
                 </div>
-
                 <div style={cardStyle()}>
                   <h3 style={{ margin: "0 0 4px 0" }}>Timesheet Approvals</h3>
                   <div style={{ color: "#6b7280", fontSize: 13, marginBottom: 12 }}>Review and approve submitted timesheets</div>
