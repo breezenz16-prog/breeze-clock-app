@@ -360,6 +360,7 @@ export default function Page() {
   async function saveResetPassword(empId) {
     const password = resetPasswordValue.trim();
     if (!password) { setMessage("Please enter a password."); return; }
+    if (!window.confirm("Are you sure you want to reset this employee's password?")) return;
     try {
       await updateDoc(doc(db, "employees", empId), { password });
       setResetPasswordEmployeeId(""); setResetPasswordValue(""); setMessage("Employee password reset successfully. ✅");
@@ -367,6 +368,8 @@ export default function Page() {
   }
 
   async function removeEmployee(empId) {
+    const emp = employees.find(e => e.id === empId);
+    if (!window.confirm(`Are you sure you want to remove ${emp?.name}? They will no longer be able to log in.`)) return;
     try {
       await updateDoc(doc(db, "employees", empId), { active: false });
       if (selectedEmployee?.id === empId) handleEmployeeLogout();
