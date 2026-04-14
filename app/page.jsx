@@ -85,11 +85,11 @@ function checkLocation() {
         if (dist <= MAX_DISTANCE_METERS) {
           resolve(dist);
         } else {
-          reject(`You are too far from the restaurant (${Math.round(dist)}m away). You must be within ${MAX_DISTANCE_METERS}m to clock in or out.`);
+          reject("You are not in Breeze Restaurant. Please contact your manager.");
         }
       },
       (err) => {
-        reject("Location access denied. Please allow location access to clock in or out.");
+        reject("You are not in Breeze Restaurant. Please contact your manager.");
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
