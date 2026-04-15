@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/midnight-clockout",
+      "schedule": "55 11 * * *"
+    }
+  ]
+}
