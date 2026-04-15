@@ -18,9 +18,19 @@ const EMAILJS_TEMPLATE_ID = "template_9npp595";
 const EMAILJS_PUBLIC_KEY = "0Gyw2c9jKIx3MCFKx";
 const NZ_TIMEZONE = "Pacific/Auckland";
 
+function getClockOutTime() {
+  // Get current date in NZ timezone
+  const nowNZ = new Date().toLocaleString("en-NZ", { timeZone: NZ_TIMEZONE });
+  const [datePart] = nowNZ.split(", ");
+  const [day, month, year] = datePart.split("/");
+  // Set clock out to 11:55 PM NZ time on the same NZ date
+  const clockOutNZ = new Date(`${year}-${month}-${day}T23:55:00+12:00`);
+  return clockOutNZ;
+}
+
 export async function GET(request) {
   try {
-    const now = new Date();
+    const clockOutTime = getClockOutTime();
     const shiftsRef = collection(db, "shifts");
     const snapshot = await getDocs(query(shiftsRef, where("clockOut", "==", null)));
 
@@ -33,10 +43,10 @@ export async function GET(request) {
     for (const docSnap of snapshot.docs) {
       const shift = docSnap.data();
       const clockInTime = shift.clockIn?.toDate?.() || new Date(shift.clockIn);
-      const hours = (now - clockInTime) / (1000 * 60 * 60);
+      const hours = (clockOutTime - clockInTime) / (1000 * 60 * 60);
 
       await updateDoc(doc(db, "shifts", docSnap.id), {
-        clockOut: now.toISOString(),
+        clockOut: clockOutTime.toISOString(),
         totalHours: Math.round(hours * 100) / 100,
         autoClockOut: true,
       });
@@ -45,7 +55,7 @@ export async function GET(request) {
     }
 
     for (const staff of forgottenStaff) {
-      const time = now.toLocaleString("en-NZ", {
+      const timeDisplay = clockOutTime.toLocaleString("en-NZ", {
         timeZone: NZ_TIMEZONE, hour: "2-digit", minute: "2-digit",
         hour12: true, weekday: "short", day: "numeric", month: "short",
       });
@@ -59,8 +69,8 @@ export async function GET(request) {
           template_params: {
             staff_name: staff.name,
             role: staff.role,
-            action: "auto clocked OUT at midnight (forgot to clock out)",
-            time: time,
+            action: "auto clocked OUT at 11:55 PM (forgot to clock out)",
+            time: timeDisplay,
           },
         }),
       });
