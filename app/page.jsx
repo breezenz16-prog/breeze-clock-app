@@ -178,25 +178,8 @@ export default function Page() {
     return () => { u1(); u2(); u3(); u4(); };
   }, []);
 
-  useEffect(() => {
-    const unsubShifts = onSnapshot(query(collection(db, "shifts"), orderBy("clockIn", "desc")), snap => {
-      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      data.forEach(async entry => {
-        if (!entry.clockOut) {
-          const nzNow = new Date(new Date().toLocaleString("en-US", { timeZone: NZ_TIMEZONE }));
-          if (nzNow.getHours() === 0 && nzNow.getMinutes() === 0) {
-            const midnight = new Date(nzNow); midnight.setHours(0,0,0,0);
-            const stamp = midnight.toISOString();
-            try {
-              await updateDoc(doc(db, "shifts", entry.id), { clockOut: stamp, totalHours: hoursBetween(entry.clockIn, stamp) });
-              await sendEmailNotification(entry.employeeName, entry.role, "auto clocked OUT at midnight (forgot to clock out)");
-            } catch (err) { console.error(err); }
-          }
-        }
-      });
-    });
-    return () => unsubShifts();
-  }, []);
+  // Auto clock-out is handled server-side via Vercel cron job (/api/midnight-clockout)
+  // Removed client-side auto clock-out to prevent incorrect early clock-outs
 
   useEffect(() => {
     if (!adminUnlocked) return;
