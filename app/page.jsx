@@ -75,7 +75,6 @@ function formatTimeNZ(v) { return new Date(v).toLocaleTimeString("en-NZ", { time
 function hoursBetween(s, e) { return Math.max(0, (new Date(e).getTime() - new Date(s).getTime()) / 3600000); }
 
 // Anchored to known correct pay period start: 13/04/2026
-// This ensures fortnights always align with your actual pay cycle
 function getFortnightOptions(count = 8) {
   const anchor = new Date("2026-04-13T00:00:00");
   const today = new Date();
@@ -182,8 +181,7 @@ export default function Page() {
     return () => { u1(); u2(); u3(); u4(); };
   }, []);
 
-  // Auto clock-out is handled server-side via Vercel cron job (/api/midnight-clockout)
-  // Removed client-side auto clock-out to prevent incorrect early clock-outs
+  // Auto clock-out handled server-side via Vercel cron (/api/midnight-clockout)
 
   useEffect(() => {
     if (!adminUnlocked) return;
@@ -372,6 +370,7 @@ export default function Page() {
     if (!window.confirm("Delete this shift?")) return;
     try { await deleteDoc(doc(db, "shifts", id)); setMsg("Shift deleted. ✅"); }
     catch { setMsg("Error deleting."); }
+  }
 
   async function addManualShift() {
     if (!addShiftEmpId || !addShiftIn) { setMsg("Please select an employee and enter clock in time."); return; }
@@ -384,9 +383,8 @@ export default function Page() {
       const co = addShiftOut ? toIso(addShiftOut) : null;
       await addDoc(collection(db, "shifts"), { employeeId: emp.id, employeeName: emp.name, role: emp.role, clockIn: ci, clockOut: co, totalHours: co ? hoursBetween(ci, co) : null });
       setAddShiftEmpId(""); setAddShiftIn(""); setAddShiftOut(""); setShowAddShift(false);
-      setMsg("Manual shift added. u2705");
+      setMsg("Manual shift added. ✅");
     } catch { setMsg("Error adding shift."); }
-  }
   }
 
   if (loading) return (
@@ -596,22 +594,35 @@ export default function Page() {
                 <div style={cStyle()}>
                   <h3 style={{ margin: "0 0 12px 0" }}>Admin View</h3>
                   <div style={{ color: "#6b7280", marginBottom: 12, fontSize: 13 }}>Live shifts from all devices 🔥</div>
-                  <button style={{ ...bStyle("secondary"), marginBottom: 8, width: "100%" }} onClick={() => setShowAddShift(p => !p)}>➕ Add Manual Shift</button>
+
+                  {/* Add Manual Shift */}
+                  <button style={{ ...bStyle("secondary"), width: "100%", marginBottom: 12 }} onClick={() => setShowAddShift(p => !p)}>
+                    ➕ Add Manual Shift
+                  </button>
                   {showAddShift && (
                     <div style={{ border: "2px solid #ffd700", borderRadius: 14, padding: 14, marginBottom: 16, background: "#fffbeb", display: "grid", gap: 10 }}>
-                      <div style={{ fontWeight: 700, marginBottom: 4 }}>➕ Add Manual Shift</div>
+                      <div style={{ fontWeight: 700 }}>➕ Add Manual Shift</div>
                       <select style={iStyle()} value={addShiftEmpId} onChange={e => setAddShiftEmpId(e.target.value)}>
                         <option value="">Select employee...</option>
-                        {employees.filter(e => e.active !== false).map(emp => <option key={emp.id} value={emp.id}>{emp.name} ({emp.role})</option>)}
+                        {employees.filter(e => e.active !== false).map(emp => (
+                          <option key={emp.id} value={emp.id}>{emp.name} ({emp.role})</option>
+                        ))}
                       </select>
-                      <div><div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock In</div><input style={iStyle()} type="datetime-local" value={addShiftIn} onChange={e => setAddShiftIn(e.target.value)} /></div>
-                      <div><div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock Out (optional — leave blank if still working)</div><input style={iStyle()} type="datetime-local" value={addShiftOut} onChange={e => setAddShiftOut(e.target.value)} /></div>
+                      <div>
+                        <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock In</div>
+                        <input style={iStyle()} type="datetime-local" value={addShiftIn} onChange={e => setAddShiftIn(e.target.value)} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock Out <span style={{ fontWeight: 400 }}>(leave blank if still working)</span></div>
+                        <input style={iStyle()} type="datetime-local" value={addShiftOut} onChange={e => setAddShiftOut(e.target.value)} />
+                      </div>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                         <button style={bStyle()} onClick={addManualShift}>Save Shift</button>
                         <button style={bStyle("ghost")} onClick={() => { setShowAddShift(false); setAddShiftEmpId(""); setAddShiftIn(""); setAddShiftOut(""); }}>Cancel</button>
                       </div>
                     </div>
                   )}
+
                   <div style={{ display: "grid", gap: 8, marginBottom: 16 }}>
                     <select style={iStyle()} value={selAdminFN} onChange={e => setSelAdminFN(e.target.value)}>
                       {fnOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
