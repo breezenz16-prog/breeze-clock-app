@@ -1,5 +1,5 @@
 # 🍛 Breeze Clock App
-**Version: 76**
+**Version: 79**
 Live URL: https://breeze-clock-app.vercel.app
 
 Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
@@ -35,8 +35,8 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - Reset employee passwords
 - "Are you sure?" on all destructive actions
 - Live shifts from all devices 🔥
-- Shifts grouped by employee & date (split shift friendly)
-- Day total shown for split shifts
+- ➕ Add Manual Shift — admin can manually add a shift for any employee (with optional clock out)
+- Per-employee hours total in shift cards
 - Grand total hours for selected fortnight
 - Fortnight selector & shift filter
 - ✏️ Edit shift times manually
@@ -45,8 +45,13 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - ↩️ Undo timesheet approval
 - ⬇️ Download Timesheet CSV for Xero
 - 12-hour AM/PM time format
-- Auto clock out at midnight
+- Auto clock out at 11:55 PM NZST (server-side via Vercel cron — no client-side interference)
 - 📧 Email alert when staff forgot to clock out
+
+## 📅 Pay Cycle
+- Fortnightly periods anchored to 13/04/2026
+- Aligns perfectly with pay day on 28/04/2026
+- Auto-generates correct fortnights forever from anchor date
 
 ## 💰 Cost
 - Vercel hosting: Free ✅
@@ -59,3 +64,10 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - Firebase Firestore
 - EmailJS
 - Vercel
+
+## 📝 Version History
+- v79 — ➕ Add Manual Shift feature added to Admin View
+- v78 — Removed buggy client-side auto clock-out (now server-side only via Vercel cron)
+- v77 — Fortnight schedule fixed, anchored to correct pay cycle (13/04/2026)
+- v59 — Download Timesheet CSV for Xero, rejected timesheets hidden, staff approval status visible
+- v50 — GPS location lock, test mode accounts, auto clock-out at midnight, email alerts
