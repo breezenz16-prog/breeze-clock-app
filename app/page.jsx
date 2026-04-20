@@ -141,6 +141,10 @@ export default function Page() {
   const [editShiftId, setEditShiftId] = useState("");
   const [editShiftIn, setEditShiftIn] = useState("");
   const [editShiftOut, setEditShiftOut] = useState("");
+  const [showAddShift, setShowAddShift] = useState(false);
+  const [addShiftEmpId, setAddShiftEmpId] = useState("");
+  const [addShiftIn, setAddShiftIn] = useState("");
+  const [addShiftOut, setAddShiftOut] = useState("");
   const [liveTime, setLiveTime] = useState(new Date());
 
   const fnOpts = useMemo(() => getFortnightOptions(), []);
@@ -368,6 +372,21 @@ export default function Page() {
     if (!window.confirm("Delete this shift?")) return;
     try { await deleteDoc(doc(db, "shifts", id)); setMsg("Shift deleted. ✅"); }
     catch { setMsg("Error deleting."); }
+
+  async function addManualShift() {
+    if (!addShiftEmpId || !addShiftIn) { setMsg("Please select an employee and enter clock in time."); return; }
+    if (!window.confirm("Add this manual shift?")) return;
+    const emp = employees.find(e => e.id === addShiftEmpId);
+    if (!emp) { setMsg("Employee not found."); return; }
+    try {
+      const toIso = s => { const [d,t] = s.split("T"); const [y,m,day] = d.split("-"); const [h,min] = t.split(":"); return new Date(`${y}-${m}-${day}T${h}:${min}:00`).toISOString(); };
+      const ci = toIso(addShiftIn);
+      const co = addShiftOut ? toIso(addShiftOut) : null;
+      await addDoc(collection(db, "shifts"), { employeeId: emp.id, employeeName: emp.name, role: emp.role, clockIn: ci, clockOut: co, totalHours: co ? hoursBetween(ci, co) : null });
+      setAddShiftEmpId(""); setAddShiftIn(""); setAddShiftOut(""); setShowAddShift(false);
+      setMsg("Manual shift added. u2705");
+    } catch { setMsg("Error adding shift."); }
+  }
   }
 
   if (loading) return (
@@ -577,6 +596,22 @@ export default function Page() {
                 <div style={cStyle()}>
                   <h3 style={{ margin: "0 0 12px 0" }}>Admin View</h3>
                   <div style={{ color: "#6b7280", marginBottom: 12, fontSize: 13 }}>Live shifts from all devices 🔥</div>
+                  <button style={{ ...bStyle("secondary"), marginBottom: 8, width: "100%" }} onClick={() => setShowAddShift(p => !p)}>➕ Add Manual Shift</button>
+                  {showAddShift && (
+                    <div style={{ border: "2px solid #ffd700", borderRadius: 14, padding: 14, marginBottom: 16, background: "#fffbeb", display: "grid", gap: 10 }}>
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>➕ Add Manual Shift</div>
+                      <select style={iStyle()} value={addShiftEmpId} onChange={e => setAddShiftEmpId(e.target.value)}>
+                        <option value="">Select employee...</option>
+                        {employees.filter(e => e.active !== false).map(emp => <option key={emp.id} value={emp.id}>{emp.name} ({emp.role})</option>)}
+                      </select>
+                      <div><div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock In</div><input style={iStyle()} type="datetime-local" value={addShiftIn} onChange={e => setAddShiftIn(e.target.value)} /></div>
+                      <div><div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock Out (optional — leave blank if still working)</div><input style={iStyle()} type="datetime-local" value={addShiftOut} onChange={e => setAddShiftOut(e.target.value)} /></div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                        <button style={bStyle()} onClick={addManualShift}>Save Shift</button>
+                        <button style={bStyle("ghost")} onClick={() => { setShowAddShift(false); setAddShiftEmpId(""); setAddShiftIn(""); setAddShiftOut(""); }}>Cancel</button>
+                      </div>
+                    </div>
+                  )}
                   <div style={{ display: "grid", gap: 8, marginBottom: 16 }}>
                     <select style={iStyle()} value={selAdminFN} onChange={e => setSelAdminFN(e.target.value)}>
                       {fnOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
