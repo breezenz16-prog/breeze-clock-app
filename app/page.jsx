@@ -74,14 +74,19 @@ function formatDateNZ(v) { return new Date(v).toLocaleDateString("en-NZ", { time
 function formatTimeNZ(v) { return new Date(v).toLocaleTimeString("en-NZ", { timeZone: NZ_TIMEZONE, hour: "2-digit", minute: "2-digit", hour12: true }); }
 function hoursBetween(s, e) { return Math.max(0, (new Date(e).getTime() - new Date(s).getTime()) / 3600000); }
 
+// Anchored to known correct pay period start: 13/04/2026
+// This ensures fortnights always align with your actual pay cycle
 function getFortnightOptions(count = 8) {
+  const anchor = new Date("2026-04-13T00:00:00");
   const today = new Date();
-  const mon = new Date(today);
-  mon.setHours(0,0,0,0);
-  mon.setDate(today.getDate() - (today.getDay() + 6) % 7);
+  const diffMs = today - anchor;
+  const diffFn = Math.floor(diffMs / (14 * 24 * 60 * 60 * 1000));
+  const currentStart = new Date(anchor);
+  currentStart.setDate(anchor.getDate() + diffFn * 14);
+  currentStart.setHours(0, 0, 0, 0);
   return Array.from({ length: count }, (_, i) => {
-    const s = new Date(mon); s.setDate(mon.getDate() - i * 14); s.setHours(0,0,0,0);
-    const e = new Date(s); e.setDate(s.getDate() + 13); e.setHours(23,59,59,999);
+    const s = new Date(currentStart); s.setDate(currentStart.getDate() - i * 14); s.setHours(0, 0, 0, 0);
+    const e = new Date(s); e.setDate(s.getDate() + 13); e.setHours(23, 59, 59, 999);
     return { value: `${s.toISOString()}__${e.toISOString()}`, label: `${formatDateNZ(s)} - ${formatDateNZ(e)}`, startIso: s.toISOString(), endIso: e.toISOString() };
   });
 }
