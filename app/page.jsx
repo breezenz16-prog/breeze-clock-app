@@ -227,7 +227,7 @@ export default function Page() {
   function logout() { setLoggedIn(false); setEmpId(""); setEmpEmail(""); setEmpPw(""); setMsg("Staff logged out."); }
   async function clockIn() {
     if (!selEmp) return;
-    if (activeShifts[selEmp.id]) { setMsg("Already clocked in."); return; }
+    if (entries.some(e => e.employeeId === selEmp.id && !e.clockOut)) { setMsg("Already clocked in."); return; }
     const isTest = TEST_ACCOUNTS.includes(selEmp.email?.toLowerCase());
     if (!isTest) {
       setMsg("📍 Checking your location...");
@@ -397,8 +397,8 @@ export default function Page() {
                   <div style={{ ...cStyle(), padding: 16, background: "#111827", borderRadius: 16 }}>
                     <div style={{ fontSize: 22, fontWeight: 900, color: "#ffd700" }}>👋 Welcome, {selEmp?.name}!</div>
                     <div style={{ color: "#9ca3af", marginTop: 6, fontSize: 14 }}>{liveTime.toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, weekday: "long", day: "numeric", month: "long" })}</div>
-                    <div style={{ marginTop: 8, display: "inline-block", background: activeShifts[selEmp?.id] ? "#065f46" : "#1f2937", borderRadius: 10, padding: "4px 12px", fontSize: 13, fontWeight: 600, color: activeShifts[selEmp?.id] ? "#6ee7b7" : "#9ca3af" }}>
-                      {activeShifts[selEmp?.id] ? "🟢 Currently Clocked In" : "⚪ Not Clocked In"}
+                    <div style={{ marginTop: 8, display: "inline-block", background: entries.some(e => e.employeeId === selEmp?.id && !e.clockOut) ? "#065f46" : "#1f2937", borderRadius: 10, padding: "4px 12px", fontSize: 13, fontWeight: 600, color: entries.some(e => e.employeeId === selEmp?.id && !e.clockOut) ? "#6ee7b7" : "#9ca3af" }}>
+                      {entries.some(e => e.employeeId === selEmp?.id && !e.clockOut) ? "🟢 Currently Clocked In" : "⚪ Not Clocked In"}
                     </div>
                   </div>
                   <div style={cStyle()}>
