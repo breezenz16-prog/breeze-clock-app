@@ -1,7 +1,6 @@
 # 🍛 Breeze Clock App
-**Version: 79**
+**Version: 83**
 Live URL: https://breeze-clock-app.vercel.app
-
 Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 16 Hood St, Hamilton Central · 07 949 8159
 
@@ -22,6 +21,7 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - "Are you sure?" confirmation on clock out
 - 📍 GPS location lock (50m from restaurant)
 - 🧪 Test mode for noor & seema accounts
+- Live clock-in status — 🟢 Currently Clocked In / ⚪ Not Clocked In
 - Fortnight timesheet view with dates & hours
 - Timesheet submission with "Are you sure?" confirmation
 - ✅ Staff can see Approved / ⏳ Pending status on submitted timesheets
@@ -36,6 +36,7 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - "Are you sure?" on all destructive actions
 - Live shifts from all devices 🔥
 - ➕ Add Manual Shift — admin can manually add a shift for any employee (with optional clock out)
+- ✕ Clear Clock Out button in Edit Shift form
 - Per-employee hours total in shift cards
 - Grand total hours for selected fortnight
 - Fortnight selector & shift filter
@@ -45,8 +46,6 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - ↩️ Undo timesheet approval
 - ⬇️ Download Timesheet CSV for Xero
 - 12-hour AM/PM time format
-- Auto clock out at 11:55 PM NZST (server-side via Vercel cron — no client-side interference)
-- 📧 Email alert when staff forgot to clock out
 
 ## 📅 Pay Cycle
 - Fortnightly periods anchored to 13/04/2026
@@ -64,10 +63,3 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - Firebase Firestore
 - EmailJS
 - Vercel
-
-## 📝 Version History
-- v79 — ➕ Add Manual Shift feature added to Admin View
-- v78 — Removed buggy client-side auto clock-out (now server-side only via Vercel cron)
-- v77 — Fortnight schedule fixed, anchored to correct pay cycle (13/04/2026)
-- v59 — Download Timesheet CSV for Xero, rejected timesheets hidden, staff approval status visible
-- v50 — GPS location lock, test mode accounts, auto clock-out at midnight, email alerts
