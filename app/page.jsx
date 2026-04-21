@@ -582,7 +582,7 @@ export default function Page() {
                       <div style={{ fontWeight: 700, marginBottom: 12 }}>✏️ Edit Shift</div>
                       <div style={{ display: "grid", gap: 10 }}>
                         <div><div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock In</div><input style={iStyle()} type="datetime-local" value={editShiftIn} onChange={e => setEditShiftIn(e.target.value)} /></div>
-                        <div><div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock Out</div><input style={iStyle()} type="datetime-local" value={editShiftOut} onChange={e => setEditShiftOut(e.target.value)} /></div>
+                        <div><div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock Out</div><div style={{ display: "flex", gap: 8 }}><input style={{ ...iStyle(), flex: 1 }} type="datetime-local" value={editShiftOut} onChange={e => setEditShiftOut(e.target.value)} /><button style={{ ...bStyle("ghost"), whiteSpace: "nowrap", padding: "12px 10px" }} onClick={() => setEditShiftOut("")}>✕ Clear</button></div></div>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                           <button style={bStyle()} onClick={() => saveShiftEdit(editShiftId)}>Save</button>
                           <button style={bStyle("ghost")} onClick={() => setEditShiftId("")}>Cancel</button>
