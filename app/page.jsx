@@ -153,7 +153,7 @@ export default function Page() {
     });
     const u2 = onSnapshot(collection(db, "employees"), snap => {
       if (snap.empty) defaultEmployees.forEach(e => addDoc(collection(db, "employees"), e));
-      else setEmployees(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      else setEmployees(snap.docs.map(d => ({ ...d.data(), id: d.id })));
       setLoading(false);
     });
     const u3 = onSnapshot(query(collection(db, "timesheetSubmissions"), orderBy("submittedAt", "desc")), snap => {
