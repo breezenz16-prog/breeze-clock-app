@@ -2,7 +2,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "firebase/firestore";
-
 const firebaseConfig = {
   apiKey: "AIzaSyBPqNbYoM3LaCCIlTFiMngbxCNbTKkVfsM",
   authDomain: "breeze-clock-6a4f3.firebaseapp.com",
@@ -13,7 +12,6 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
 const ADMIN_EMAIL = "breezenz16@gmail.com";
 const DEFAULT_ADMIN_PASSWORD = "02041462704";
 const NZ_TIMEZONE = "Pacific/Auckland";
@@ -25,7 +23,6 @@ const TEST_ACCOUNTS = ["noor@breeze.local", "seema@breeze.local"];
 const RESTAURANT_LAT = -37.7870;
 const RESTAURANT_LNG = 175.2793;
 const MAX_DISTANCE_METERS = 50;
-
 async function sendEmailNotification(staffName, role, action) {
   try {
     const time = new Date().toLocaleString("en-NZ", { timeZone: NZ_TIMEZONE, hour: "2-digit", minute: "2-digit", hour12: true, weekday: "short", day: "numeric", month: "short" });
@@ -36,7 +33,6 @@ async function sendEmailNotification(staffName, role, action) {
     });
   } catch (err) { console.error("Email notification failed:", err); }
 }
-
 function getDistanceMeters(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -44,7 +40,6 @@ function getDistanceMeters(lat1, lng1, lat2, lng2) {
   const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
-
 function checkLocation() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) { reject("You are not in Breeze Restaurant. Please contact your manager."); return; }
@@ -58,7 +53,6 @@ function checkLocation() {
     );
   });
 }
-
 const defaultEmployees = [
   { id: "emp-1", name: "Noor", email: "noor@breeze.local", password: "1111", role: "FOH", active: true },
   { id: "emp-2", name: "Smith", email: "smith@breeze.local", password: "2222", role: "Chef", active: true },
@@ -67,14 +61,11 @@ const defaultEmployees = [
 ];
 const roleOptions = ["FOH", "Manager", "Chef", "Cook", "Kitchen"];
 const defaultAdminSettings = { email: ADMIN_EMAIL, password: DEFAULT_ADMIN_PASSWORD };
-
 function nowIso() { return new Date().toISOString(); }
 function formatDateTimeNZ(v) { return new Date(v).toLocaleString("en-NZ", { timeZone: NZ_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: true }); }
 function formatDateNZ(v) { return new Date(v).toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit" }); }
 function formatTimeNZ(v) { return new Date(v).toLocaleTimeString("en-NZ", { timeZone: NZ_TIMEZONE, hour: "2-digit", minute: "2-digit", hour12: true }); }
 function hoursBetween(s, e) { return Math.max(0, (new Date(e).getTime() - new Date(s).getTime()) / 3600000); }
-
-// Anchored to known correct pay period start: 13/04/2026
 function getFortnightOptions(count = 8) {
   const anchor = new Date("2026-04-13T00:00:00");
   const today = new Date();
@@ -89,7 +80,6 @@ function getFortnightOptions(count = 8) {
     return { value: `${s.toISOString()}__${e.toISOString()}`, label: `${formatDateNZ(s)} - ${formatDateNZ(e)}`, startIso: s.toISOString(), endIso: e.toISOString() };
   });
 }
-
 const iStyle = () => ({ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid #d1d5db", fontSize: 14, boxSizing: "border-box" });
 const bStyle = (k = "primary") => {
   const b = { padding: "12px 14px", borderRadius: 12, border: "1px solid #111827", cursor: "pointer", fontSize: 14, fontWeight: 600 };
@@ -99,7 +89,6 @@ const bStyle = (k = "primary") => {
   return { ...b, background: "#111827", color: "#fff" };
 };
 const cStyle = () => ({ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 20, padding: 18, boxShadow: "0 1px 2px rgba(0,0,0,0.04)" });
-
 export default function Page() {
   const [employees, setEmployees] = useState(defaultEmployees);
   const [entries, setEntries] = useState([]);
@@ -145,19 +134,15 @@ export default function Page() {
   const [addShiftIn, setAddShiftIn] = useState("");
   const [addShiftOut, setAddShiftOut] = useState("");
   const [liveTime, setLiveTime] = useState(new Date());
-
   const fnOpts = useMemo(() => getFortnightOptions(), []);
-
   useEffect(() => {
     if (!selFN && fnOpts[0]) setSelFN(fnOpts[0].value);
     if (!selAdminFN && fnOpts[0]) setSelAdminFN(fnOpts[0].value);
   }, [fnOpts, selFN, selAdminFN]);
-
   useEffect(() => {
     const timer = setInterval(() => setLiveTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-
   useEffect(() => {
     const u1 = onSnapshot(query(collection(db, "shifts"), orderBy("clockIn", "desc")), snap => {
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -180,9 +165,6 @@ export default function Page() {
     });
     return () => { u1(); u2(); u3(); u4(); };
   }, []);
-
-  // Auto clock-out handled server-side via Vercel cron (/api/midnight-clockout)
-
   useEffect(() => {
     if (!adminUnlocked) return;
     let tid;
@@ -192,12 +174,10 @@ export default function Page() {
     reset();
     return () => { clearTimeout(tid); evts.forEach(e => window.removeEventListener(e, reset)); };
   }, [adminUnlocked]);
-
   const selEmp = useMemo(() => employees.find(e => e.id === empId), [employees, empId]);
   const selEmpByEmail = useMemo(() => employees.find(e => e.active !== false && (e.email||"").toLowerCase() === empEmail.trim().toLowerCase()), [employees, empEmail]);
   const selFNRange = useMemo(() => fnOpts.find(o => o.value === selFN) || fnOpts[0], [fnOpts, selFN]);
   const selAdminFNRange = useMemo(() => fnOpts.find(o => o.value === selAdminFN) || fnOpts[0], [fnOpts, selAdminFN]);
-
   const filteredEntries = useMemo(() => {
     const s = selAdminFNRange ? new Date(selAdminFNRange.startIso) : null;
     const e = selAdminFNRange ? new Date(selAdminFNRange.endIso) : null;
@@ -206,7 +186,6 @@ export default function Page() {
     if (adminFilter === "closed") return byP.filter(x => !!x.clockOut);
     return byP;
   }, [entries, adminFilter, selAdminFNRange]);
-
   const fnEntries = useMemo(() => {
     if (!empId || !selFNRange) return [];
     const s = new Date(selFNRange.startIso), e = new Date(selFNRange.endIso);
@@ -219,14 +198,11 @@ export default function Page() {
       }, {});
     return Object.values(g).sort((a, b) => b.sortValue - a.sortValue);
   }, [entries, empId, selFNRange]);
-
   const fnHours = useMemo(() => fnEntries.reduce((s, r) => s + r.hours, 0), [fnEntries]);
-
   const filteredTs = useMemo(() => {
     const notRej = timesheetSubmissions.filter(i => i.status.toLowerCase() !== "rejected");
     return tsFilter === "all" ? notRej : notRej.filter(i => i.status.toLowerCase() === tsFilter);
   }, [timesheetSubmissions, tsFilter]);
-
   function downloadCSV() {
     const rows = [["Employee","Role","Period","Total Hours"]];
     const totals = {};
@@ -242,7 +218,6 @@ export default function Page() {
     a.download = `Breeze_Timesheet_${selAdminFNRange?.label||"fortnight"}.csv`;
     a.click();
   }
-
   function login() {
     if (!selEmpByEmail) { setMsg("No active staff account found for this email."); return; }
     if (selEmpByEmail.password !== empPw) { setMsg("Incorrect password."); return; }
@@ -250,7 +225,6 @@ export default function Page() {
     setMsg(`${selEmpByEmail.name} logged in successfully.`);
   }
   function logout() { setLoggedIn(false); setEmpId(""); setEmpEmail(""); setEmpPw(""); setMsg("Staff logged out."); }
-
   async function clockIn() {
     if (!selEmp) return;
     if (activeShifts[selEmp.id]) { setMsg("Already clocked in."); return; }
@@ -264,11 +238,11 @@ export default function Page() {
       setMsg(`${selEmp.name} clocked in. ✅`);
     } catch { setMsg("Error clocking in."); }
   }
-
   async function clockOut() {
     if (!selEmp) return;
-    const activeId = activeShifts[selEmp.id];
-    if (!activeId) { setMsg("Not clocked in."); return; }
+    // FIX v80: Search entries directly for open shift — works for both self clock-in and admin manual shifts
+    const openShift = entries.find(e => e.employeeId === selEmp.id && !e.clockOut);
+    if (!openShift) { setMsg("Not clocked in."); return; }
     if (!window.confirm(`Are you sure you want to clock out, ${selEmp.name}?`)) return;
     const isTest = TEST_ACCOUNTS.includes(selEmp.email?.toLowerCase());
     if (!isTest) {
@@ -276,14 +250,11 @@ export default function Page() {
       try { await checkLocation(); } catch (err) { setMsg(`❌ ${err}`); return; }
     }
     const stamp = nowIso();
-    const entry = entries.find(e => e.id === activeId);
-    if (!entry) return;
     try {
-      await updateDoc(doc(db, "shifts", activeId), { clockOut: stamp, totalHours: hoursBetween(entry.clockIn, stamp) });
+      await updateDoc(doc(db, "shifts", openShift.id), { clockOut: stamp, totalHours: hoursBetween(openShift.clockIn, stamp) });
       setMsg(`${selEmp.name} clocked out. ✅`);
     } catch { setMsg("Error clocking out."); }
   }
-
   async function submitTS() {
     if (!selEmp || !selFNRange) return;
     if (timesheetSubmissions.find(i => i.employeeId === selEmp.id && i.period === selFNRange.label && i.status === "Pending")) { setMsg("A timesheet for this fortnight is already pending."); return; }
@@ -293,12 +264,10 @@ export default function Page() {
       setMsg("Timesheet submitted. ✅");
     } catch { setMsg("Error submitting timesheet."); }
   }
-
   function unlockAdmin() {
     if (adminPw !== adminSettings.password) { setMsg("Incorrect admin password."); return; }
     setAdminUnlocked(true); setAdminPw(""); setShowReset(false); setMsg("Admin access granted.");
   }
-
   async function resetAdminPw() {
     if (resetEmail.trim().toLowerCase() !== adminSettings.email.toLowerCase()) { setMsg("Admin verification failed."); return; }
     if (!newPw.trim()) { setMsg("Please enter a new password."); return; }
@@ -309,7 +278,6 @@ export default function Page() {
       setResetEmail(""); setNewPw(""); setConfirmPw(""); setShowReset(false); setMsg("Admin password reset. ✅");
     } catch { setMsg("Error resetting password."); }
   }
-
   async function addEmployee() {
     const name = newName.trim(), email = newEmail.trim().toLowerCase(), pw = newEmpPw.trim();
     if (!name||!email||!pw) { setMsg("Please fill all fields."); return; }
@@ -319,7 +287,6 @@ export default function Page() {
       setNewName(""); setNewEmail(""); setNewEmpPw(""); setNewRole("FOH"); setMsg("Employee created. ✅");
     } catch { setMsg("Error creating employee."); }
   }
-
   async function saveEditEmp(id) {
     const name = editName.trim(), email = editEmail.trim().toLowerCase();
     if (!name||!email) { setMsg("Please fill all fields."); return; }
@@ -327,7 +294,6 @@ export default function Page() {
     try { await updateDoc(doc(db, "employees", id), { name, email, role: editRole }); setEditEmpId(""); setMsg("Employee updated. ✅"); }
     catch { setMsg("Error updating."); }
   }
-
   async function savePwReset(id) {
     const pw = resetPwVal.trim();
     if (!pw) { setMsg("Please enter a password."); return; }
@@ -335,26 +301,22 @@ export default function Page() {
     try { await updateDoc(doc(db, "employees", id), { password: pw }); setResetPwId(""); setResetPwVal(""); setMsg("Password reset. ✅"); }
     catch { setMsg("Error resetting."); }
   }
-
   async function removeEmp(id) {
     const emp = employees.find(e => e.id === id);
     if (!window.confirm(`Are you sure you want to remove ${emp?.name}?`)) return;
     try { await updateDoc(doc(db, "employees", id), { active: false }); if (selEmp?.id === id) logout(); setMsg("Employee removed. ✅"); }
     catch { setMsg("Error removing."); }
   }
-
   async function updateTsStatus(id, status) {
     try { await updateDoc(doc(db, "timesheetSubmissions", id), { status }); setMsg(`Timesheet ${status.toLowerCase()}. ✅`); }
     catch { setMsg("Error updating."); }
   }
-
   async function saveTsEdit(id) {
     const h = Number(editTsHrs);
     if (isNaN(h)||h<0) { setMsg("Invalid hours."); return; }
     try { await updateDoc(doc(db, "timesheetSubmissions", id), { hours: h }); setEditTsId(""); setEditTsHrs(""); setMsg("Hours updated. ✅"); }
     catch { setMsg("Error updating."); }
   }
-
   async function saveShiftEdit(id) {
     if (!editShiftIn) { setMsg("Please enter clock in time."); return; }
     if (!window.confirm("Save changes to this shift?")) return;
@@ -365,13 +327,11 @@ export default function Page() {
       setEditShiftId(""); setMsg("Shift updated. ✅");
     } catch { setMsg("Error updating shift."); }
   }
-
   async function delShift(id) {
     if (!window.confirm("Delete this shift?")) return;
     try { await deleteDoc(doc(db, "shifts", id)); setMsg("Shift deleted. ✅"); }
     catch { setMsg("Error deleting."); }
   }
-
   async function addManualShift() {
     if (!addShiftEmpId || !addShiftIn) { setMsg("Please select an employee and enter clock in time."); return; }
     if (!window.confirm("Add this manual shift?")) return;
@@ -386,7 +346,6 @@ export default function Page() {
       setMsg("Manual shift added. ✅");
     } catch { setMsg("Error adding shift."); }
   }
-
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "Arial" }}>
       <style>{`@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:0.85}}@keyframes fadeInUp{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:translateY(0)}}@keyframes dot{0%,80%,100%{opacity:0}40%{opacity:1}}.dot1{animation:dot 1.4s infinite 0s}.dot2{animation:dot 1.4s infinite 0.2s}.dot3{animation:dot 1.4s infinite 0.4s}`}</style>
@@ -400,12 +359,9 @@ export default function Page() {
       </div>
     </div>
   );
-
   return (
     <div style={{ minHeight: "100vh", background: "#111827", padding: 16, fontFamily: "Arial, sans-serif", color: "#111827" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gap: 16 }}>
-
-        {/* Header */}
         <div style={{ background: "#000", borderRadius: 20, padding: "20px 18px", boxShadow: "0 2px 12px rgba(0,0,0,0.3)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg,#b8860b,#ffd700,#b8860b)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 28, color: "#000", flexShrink: 0 }}>B</div>
@@ -417,16 +373,13 @@ export default function Page() {
           </div>
           <div style={{ marginTop: 12, padding: "8px 12px", background: "#1a1a1a", borderRadius: 10, fontSize: 12, color: "#9ca3af", textAlign: "center" }}>Staff Clock In · Timesheet</div>
         </div>
-
         {msg && <div style={{ background: "#ffd700", borderRadius: 14, padding: 12, fontWeight: 600, color: "#000" }}>{msg}</div>}
-
         {!loggedIn ? (
           <div style={{ display: "flex", gap: 8, maxWidth: 320 }}>
             <button style={{ ...bStyle(activeTab==="staff"?"primary":"ghost"), background: activeTab==="staff" ? "linear-gradient(135deg,#b8860b,#ffd700)" : "#1f2937", color: activeTab==="staff" ? "#000" : "#9ca3af", border: "none", fontWeight: 700 }} onClick={() => setActiveTab("staff")}>Staff</button>
             <button style={{ ...bStyle(activeTab==="admin"?"primary":"ghost"), background: activeTab==="admin" ? "linear-gradient(135deg,#b8860b,#ffd700)" : "#1f2937", color: activeTab==="admin" ? "#000" : "#9ca3af", border: "none", fontWeight: 700 }} onClick={() => setActiveTab("admin")}>Admin</button>
           </div>
         ) : <div style={{ color: "#ffd700", fontSize: 13, fontWeight: 600 }}>✅ Staff session active</div>}
-
         {activeTab === "staff" ? (
           <div style={{ display: "grid", gap: 16, maxWidth: 540 }}>
             <div style={cStyle()}>
@@ -527,8 +480,6 @@ export default function Page() {
                 <div style={{ display: "flex", justifyContent: "center" }}>
                   <button style={{ ...bStyle("danger"), minWidth: 180 }} onClick={() => { setAdminUnlocked(false); setMsg("Admin logged out."); }}>Log Out (Admin)</button>
                 </div>
-
-                {/* Employee Accounts */}
                 <div style={cStyle()}>
                   <h3 style={{ marginTop: 0 }}>Employee Accounts</h3>
                   <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", marginBottom: 16 }}>
@@ -589,16 +540,10 @@ export default function Page() {
                     ))}
                   </div>
                 </div>
-
-                {/* Admin View */}
                 <div style={cStyle()}>
                   <h3 style={{ margin: "0 0 12px 0" }}>Admin View</h3>
                   <div style={{ color: "#6b7280", marginBottom: 12, fontSize: 13 }}>Live shifts from all devices 🔥</div>
-
-                  {/* Add Manual Shift */}
-                  <button style={{ ...bStyle("secondary"), width: "100%", marginBottom: 12 }} onClick={() => setShowAddShift(p => !p)}>
-                    ➕ Add Manual Shift
-                  </button>
+                  <button style={{ ...bStyle("secondary"), width: "100%", marginBottom: 12 }} onClick={() => setShowAddShift(p => !p)}>➕ Add Manual Shift</button>
                   {showAddShift && (
                     <div style={{ border: "2px solid #ffd700", borderRadius: 14, padding: 14, marginBottom: 16, background: "#fffbeb", display: "grid", gap: 10 }}>
                       <div style={{ fontWeight: 700 }}>➕ Add Manual Shift</div>
@@ -622,7 +567,6 @@ export default function Page() {
                       </div>
                     </div>
                   )}
-
                   <div style={{ display: "grid", gap: 8, marginBottom: 16 }}>
                     <select style={iStyle()} value={selAdminFN} onChange={e => setSelAdminFN(e.target.value)}>
                       {fnOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -686,14 +630,10 @@ export default function Page() {
                         <div style={{ fontSize: 14 }}>Total Hours (this period)</div>
                         <div style={{ fontSize: 24, fontWeight: 700, color: "#ffd700" }}>{filteredEntries.reduce((s, e) => s + (e.totalHours||0), 0).toFixed(2)} hrs</div>
                       </div>
-                      <button style={{ ...bStyle(), background: "linear-gradient(135deg,#b8860b,#ffd700)", color: "#000", width: "100%", fontWeight: 800 }} onClick={downloadCSV}>
-                        ⬇️ Download Timesheet CSV for Xero
-                      </button>
+                      <button style={{ ...bStyle(), background: "linear-gradient(135deg,#b8860b,#ffd700)", color: "#000", width: "100%", fontWeight: 800 }} onClick={downloadCSV}>⬇️ Download Timesheet CSV for Xero</button>
                     </div>
                   )}
                 </div>
-
-                {/* Timesheet Approvals */}
                 <div style={cStyle()}>
                   <h3 style={{ margin: "0 0 4px 0" }}>Timesheet Approvals</h3>
                   <div style={{ color: "#6b7280", fontSize: 13, marginBottom: 12 }}>Review and approve submitted timesheets</div>
