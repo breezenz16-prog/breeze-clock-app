@@ -1,5 +1,5 @@
 # 🍛 Breeze Clock App
-**Version: 83**
+**Version: 85**
 Live URL: https://breeze-clock-app.vercel.app
 Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 16 Hood St, Hamilton Central · 07 949 8159
@@ -46,6 +46,16 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - ↩️ Undo timesheet approval
 - ⬇️ Download Timesheet CSV for Xero
 - 12-hour AM/PM time format
+
+## 📊 Summary View
+- List / Summary toggle in Admin View
+- One card per employee showing fortnightly total hours
+- Tap to expand — shows Week 1 & Week 2 breakdown
+- Each shift displays date, clock in → clock out, and hours
+- Week subtotal and fortnight total per employee
+- All staff period total at the bottom
+- Split shifts on the same day shown as separate rows
+- CSV download available in both List and Summary views
 
 ## 📅 Pay Cycle
 - Fortnightly periods anchored to 13/04/2026
