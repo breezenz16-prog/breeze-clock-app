@@ -134,6 +134,9 @@ export default function Page() {
   const [addShiftIn, setAddShiftIn] = useState("");
   const [addShiftOut, setAddShiftOut] = useState("");
   const [liveTime, setLiveTime] = useState(new Date());
+  // NEW: Summary view toggle and expanded employee cards
+  const [adminViewMode, setAdminViewMode] = useState("list");
+  const [expandedSummaryEmpId, setExpandedSummaryEmpId] = useState("");
   const fnOpts = useMemo(() => getFortnightOptions(), []);
   useEffect(() => {
     if (!selFN && fnOpts[0]) setSelFN(fnOpts[0].value);
@@ -203,6 +206,26 @@ export default function Page() {
     const notRej = timesheetSubmissions.filter(i => i.status.toLowerCase() !== "rejected");
     return tsFilter === "all" ? notRej : notRej.filter(i => i.status.toLowerCase() === tsFilter);
   }, [timesheetSubmissions, tsFilter]);
+
+  // NEW: Build summary data grouped by employee for the selected fortnight
+  const summaryData = useMemo(() => {
+    if (!selAdminFNRange) return [];
+    const s = new Date(selAdminFNRange.startIso);
+    const e = new Date(selAdminFNRange.endIso);
+    const week1End = new Date(s); week1End.setDate(s.getDate() + 6); week1End.setHours(23,59,59,999);
+    const closedInPeriod = entries.filter(x => x.clockOut && new Date(x.clockIn) >= s && new Date(x.clockIn) <= e);
+    const byEmp = {};
+    closedInPeriod.forEach(shift => {
+      const eid = shift.employeeId;
+      if (!byEmp[eid]) byEmp[eid] = { employeeId: eid, employeeName: shift.employeeName, role: shift.role, week1: [], week2: [], totalHours: 0 };
+      const ci = new Date(shift.clockIn);
+      const bucket = ci <= week1End ? "week1" : "week2";
+      byEmp[eid][bucket].push(shift);
+      byEmp[eid].totalHours += shift.totalHours || 0;
+    });
+    return Object.values(byEmp).sort((a, b) => a.employeeName.localeCompare(b.employeeName));
+  }, [entries, selAdminFNRange]);
+
   function downloadCSV() {
     const rows = [["Employee","Role","Period","Total Hours"]];
     const totals = {};
@@ -240,7 +263,6 @@ export default function Page() {
   }
   async function clockOut() {
     if (!selEmp) return;
-    // FIX v80: Search entries directly for open shift — works for both self clock-in and admin manual shifts
     const openShift = entries.find(e => e.employeeId === selEmp.id && !e.clockOut);
     if (!openShift) { setMsg("Not clocked in."); return; }
     if (!window.confirm(`Are you sure you want to clock out, ${selEmp.name}?`)) return;
@@ -346,6 +368,17 @@ export default function Page() {
       setMsg("Manual shift added. ✅");
     } catch { setMsg("Error adding shift."); }
   }
+
+  // NEW: Summary view week label helper
+  function getSummaryWeekLabel(fnRange, weekNum) {
+    if (!fnRange) return "";
+    const s = new Date(fnRange.startIso);
+    const weekStart = new Date(s);
+    if (weekNum === 2) weekStart.setDate(s.getDate() + 7);
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+    return `Week ${weekNum} (${weekStart.toLocaleDateString("en-NZ",{timeZone:NZ_TIMEZONE,day:"numeric",month:"short"})} – ${weekEnd.toLocaleDateString("en-NZ",{timeZone:NZ_TIMEZONE,day:"numeric",month:"short"})})`;
+  }
+
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "Arial" }}>
       <style>{`@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:0.85}}@keyframes fadeInUp{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:translateY(0)}}@keyframes dot{0%,80%,100%{opacity:0}40%{opacity:1}}.dot1{animation:dot 1.4s infinite 0s}.dot2{animation:dot 1.4s infinite 0.2s}.dot3{animation:dot 1.4s infinite 0.4s}`}</style>
@@ -541,96 +574,199 @@ export default function Page() {
                   </div>
                 </div>
                 <div style={cStyle()}>
-                  <h3 style={{ margin: "0 0 12px 0" }}>Admin View</h3>
-                  <div style={{ color: "#6b7280", marginBottom: 12, fontSize: 13 }}>Live shifts from all devices 🔥</div>
-                  <button style={{ ...bStyle("secondary"), width: "100%", marginBottom: 12 }} onClick={() => setShowAddShift(p => !p)}>➕ Add Manual Shift</button>
-                  {showAddShift && (
-                    <div style={{ border: "2px solid #ffd700", borderRadius: 14, padding: 14, marginBottom: 16, background: "#fffbeb", display: "grid", gap: 10 }}>
-                      <div style={{ fontWeight: 700 }}>➕ Add Manual Shift</div>
-                      <select style={iStyle()} value={addShiftEmpId} onChange={e => setAddShiftEmpId(e.target.value)}>
-                        <option value="">Select employee...</option>
-                        {employees.filter(e => e.active !== false).map(emp => (
-                          <option key={emp.id} value={emp.id}>{emp.name} ({emp.role})</option>
-                        ))}
-                      </select>
-                      <div>
-                        <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock In</div>
-                        <input style={iStyle()} type="datetime-local" value={addShiftIn} onChange={e => setAddShiftIn(e.target.value)} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock Out <span style={{ fontWeight: 400 }}>(leave blank if still working)</span></div>
-                        <input style={iStyle()} type="datetime-local" value={addShiftOut} onChange={e => setAddShiftOut(e.target.value)} />
-                      </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                        <button style={bStyle()} onClick={addManualShift}>Save Shift</button>
-                        <button style={bStyle("ghost")} onClick={() => { setShowAddShift(false); setAddShiftEmpId(""); setAddShiftIn(""); setAddShiftOut(""); }}>Cancel</button>
-                      </div>
+                  {/* Admin View header with List/Summary toggle */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                    <h3 style={{ margin: 0 }}>Admin View</h3>
+                    <div style={{ display: "flex", border: "1px solid #d1d5db", borderRadius: 10, overflow: "hidden" }}>
+                      <button
+                        onClick={() => setAdminViewMode("list")}
+                        style={{ padding: "6px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none", background: adminViewMode === "list" ? "#111827" : "#f3f4f6", color: adminViewMode === "list" ? "#fff" : "#6b7280" }}
+                      >List</button>
+                      <button
+                        onClick={() => setAdminViewMode("summary")}
+                        style={{ padding: "6px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none", background: adminViewMode === "summary" ? "#111827" : "#f3f4f6", color: adminViewMode === "summary" ? "#fff" : "#6b7280" }}
+                      >Summary</button>
                     </div>
-                  )}
+                  </div>
+                  <div style={{ color: "#6b7280", marginBottom: 12, fontSize: 13 }}>Live shifts from all devices 🔥</div>
+
+                  {/* Fortnight selector — shared between both views */}
                   <div style={{ display: "grid", gap: 8, marginBottom: 16 }}>
                     <select style={iStyle()} value={selAdminFN} onChange={e => setSelAdminFN(e.target.value)}>
                       {fnOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
-                    <select style={iStyle()} value={adminFilter} onChange={e => setAdminFilter(e.target.value)}>
-                      <option value="all">All shifts</option>
-                      <option value="open">Open only</option>
-                      <option value="closed">Closed only</option>
-                    </select>
+                    {adminViewMode === "list" && (
+                      <select style={iStyle()} value={adminFilter} onChange={e => setAdminFilter(e.target.value)}>
+                        <option value="all">All shifts</option>
+                        <option value="open">Open only</option>
+                        <option value="closed">Closed only</option>
+                      </select>
+                    )}
                   </div>
-                  {editShiftId && (
-                    <div style={{ ...cStyle(), marginBottom: 16, border: "2px solid #ffd700" }}>
-                      <div style={{ fontWeight: 700, marginBottom: 12 }}>✏️ Edit Shift</div>
-                      <div style={{ display: "grid", gap: 10 }}>
-                        <div><div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock In</div><input style={iStyle()} type="datetime-local" value={editShiftIn} onChange={e => setEditShiftIn(e.target.value)} /></div>
-                        <div><div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock Out</div><div style={{ display: "flex", gap: 8 }}><input style={{ ...iStyle(), flex: 1 }} type="datetime-local" value={editShiftOut} onChange={e => setEditShiftOut(e.target.value)} /><button style={{ ...bStyle("ghost"), whiteSpace: "nowrap", padding: "12px 10px" }} onClick={() => setEditShiftOut("")}>✕ Clear</button></div></div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                          <button style={bStyle()} onClick={() => saveShiftEdit(editShiftId)}>Save</button>
-                          <button style={bStyle("ghost")} onClick={() => setEditShiftId("")}>Cancel</button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {filteredEntries.length === 0 ? (
-                    <div style={{ color: "#6b7280", padding: "8px 0" }}>No shift records yet.</div>
-                  ) : (
-                    <div style={{ display: "grid", gap: 10 }}>
-                      {Object.values(filteredEntries.reduce((g, e) => {
-                        const dk = formatDateNZ(e.clockIn);
-                        const k = `${e.employeeId}_${dk}`;
-                        if (!g[k]) g[k] = { employeeId: e.employeeId, employeeName: e.employeeName, role: e.role, date: dk, shifts: [], totalHours: 0, sortValue: new Date(e.clockIn).getTime() };
-                        g[k].shifts.push(e); g[k].totalHours += e.totalHours || 0;
-                        return g;
-                      }, {})).sort((a, b) => b.sortValue - a.sortValue).map(group => (
-                        <div key={`${group.employeeId}_${group.date}`} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                            <div>
-                              <div style={{ fontWeight: 700, fontSize: 16 }}>{group.employeeName}</div>
-                              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>{group.date}</div>
-                            </div>
-                            <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{group.role}</span>
+
+                  {adminViewMode === "list" ? (
+                    <>
+                      <button style={{ ...bStyle("secondary"), width: "100%", marginBottom: 12 }} onClick={() => setShowAddShift(p => !p)}>➕ Add Manual Shift</button>
+                      {showAddShift && (
+                        <div style={{ border: "2px solid #ffd700", borderRadius: 14, padding: 14, marginBottom: 16, background: "#fffbeb", display: "grid", gap: 10 }}>
+                          <div style={{ fontWeight: 700 }}>➕ Add Manual Shift</div>
+                          <select style={iStyle()} value={addShiftEmpId} onChange={e => setAddShiftEmpId(e.target.value)}>
+                            <option value="">Select employee...</option>
+                            {employees.filter(e => e.active !== false).map(emp => (
+                              <option key={emp.id} value={emp.id}>{emp.name} ({emp.role})</option>
+                            ))}
+                          </select>
+                          <div>
+                            <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock In</div>
+                            <input style={iStyle()} type="datetime-local" value={addShiftIn} onChange={e => setAddShiftIn(e.target.value)} />
                           </div>
-                          {group.shifts.map((e, i) => (
-                            <div key={e.id}>
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 13, marginBottom: 6 }}>
-                                <div><div style={{ color: "#6b7280", marginBottom: 2 }}>Clock In</div><div style={{ fontWeight: 600 }}>{formatTimeNZ(e.clockIn)}</div></div>
-                                <div><div style={{ color: "#6b7280", marginBottom: 2 }}>Clock Out</div><div style={{ fontWeight: 600 }}>{e.clockOut ? formatTimeNZ(e.clockOut) : "🟢 Still in"}</div></div>
+                          <div>
+                            <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock Out <span style={{ fontWeight: 400 }}>(leave blank if still working)</span></div>
+                            <input style={iStyle()} type="datetime-local" value={addShiftOut} onChange={e => setAddShiftOut(e.target.value)} />
+                          </div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                            <button style={bStyle()} onClick={addManualShift}>Save Shift</button>
+                            <button style={bStyle("ghost")} onClick={() => { setShowAddShift(false); setAddShiftEmpId(""); setAddShiftIn(""); setAddShiftOut(""); }}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                      {editShiftId && (
+                        <div style={{ ...cStyle(), marginBottom: 16, border: "2px solid #ffd700" }}>
+                          <div style={{ fontWeight: 700, marginBottom: 12 }}>✏️ Edit Shift</div>
+                          <div style={{ display: "grid", gap: 10 }}>
+                            <div><div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock In</div><input style={iStyle()} type="datetime-local" value={editShiftIn} onChange={e => setEditShiftIn(e.target.value)} /></div>
+                            <div><div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>Clock Out</div><div style={{ display: "flex", gap: 8 }}><input style={{ ...iStyle(), flex: 1 }} type="datetime-local" value={editShiftOut} onChange={e => setEditShiftOut(e.target.value)} /><button style={{ ...bStyle("ghost"), whiteSpace: "nowrap", padding: "12px 10px" }} onClick={() => setEditShiftOut("")}>✕ Clear</button></div></div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                              <button style={bStyle()} onClick={() => saveShiftEdit(editShiftId)}>Save</button>
+                              <button style={bStyle("ghost")} onClick={() => setEditShiftId("")}>Cancel</button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {filteredEntries.length === 0 ? (
+                        <div style={{ color: "#6b7280", padding: "8px 0" }}>No shift records yet.</div>
+                      ) : (
+                        <div style={{ display: "grid", gap: 10 }}>
+                          {Object.values(filteredEntries.reduce((g, e) => {
+                            const dk = formatDateNZ(e.clockIn);
+                            const k = `${e.employeeId}_${dk}`;
+                            if (!g[k]) g[k] = { employeeId: e.employeeId, employeeName: e.employeeName, role: e.role, date: dk, shifts: [], totalHours: 0, sortValue: new Date(e.clockIn).getTime() };
+                            g[k].shifts.push(e); g[k].totalHours += e.totalHours || 0;
+                            return g;
+                          }, {})).sort((a, b) => b.sortValue - a.sortValue).map(group => (
+                            <div key={`${group.employeeId}_${group.date}`} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                                <div>
+                                  <div style={{ fontWeight: 700, fontSize: 16 }}>{group.employeeName}</div>
+                                  <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>{group.date}</div>
+                                </div>
+                                <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{group.role}</span>
                               </div>
-                              {e.totalHours != null && <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Shift {i+1}: <strong>{e.totalHours.toFixed(2)} hrs</strong></div>}
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: i < group.shifts.length-1 ? 12 : 0 }}>
-                                <button style={bStyle("secondary")} onClick={() => { setEditShiftId(e.id); const toLocal = iso => { const d = new Date(iso); const nz = new Date(d.toLocaleString("en-US",{timeZone:NZ_TIMEZONE})); const p = n => String(n).padStart(2,"0"); return `${nz.getFullYear()}-${p(nz.getMonth()+1)}-${p(nz.getDate())}T${p(nz.getHours())}:${p(nz.getMinutes())}`; }; setEditShiftIn(toLocal(e.clockIn)); setEditShiftOut(e.clockOut ? toLocal(e.clockOut) : ""); }}>✏️ Edit</button>
-                                <button style={bStyle("danger")} onClick={() => delShift(e.id)}>🗑️ Delete</button>
-                              </div>
-                              {i < group.shifts.length-1 && <div style={{ borderTop: "1px dashed #e5e7eb", margin: "10px 0" }} />}
+                              {group.shifts.map((e, i) => (
+                                <div key={e.id}>
+                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 13, marginBottom: 6 }}>
+                                    <div><div style={{ color: "#6b7280", marginBottom: 2 }}>Clock In</div><div style={{ fontWeight: 600 }}>{formatTimeNZ(e.clockIn)}</div></div>
+                                    <div><div style={{ color: "#6b7280", marginBottom: 2 }}>Clock Out</div><div style={{ fontWeight: 600 }}>{e.clockOut ? formatTimeNZ(e.clockOut) : "🟢 Still in"}</div></div>
+                                  </div>
+                                  {e.totalHours != null && <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Shift {i+1}: <strong>{e.totalHours.toFixed(2)} hrs</strong></div>}
+                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: i < group.shifts.length-1 ? 12 : 0 }}>
+                                    <button style={bStyle("secondary")} onClick={() => { setEditShiftId(e.id); const toLocal = iso => { const d = new Date(iso); const nz = new Date(d.toLocaleString("en-US",{timeZone:NZ_TIMEZONE})); const p = n => String(n).padStart(2,"0"); return `${nz.getFullYear()}-${p(nz.getMonth()+1)}-${p(nz.getDate())}T${p(nz.getHours())}:${p(nz.getMinutes())}`; }; setEditShiftIn(toLocal(e.clockIn)); setEditShiftOut(e.clockOut ? toLocal(e.clockOut) : ""); }}>✏️ Edit</button>
+                                    <button style={bStyle("danger")} onClick={() => delShift(e.id)}>🗑️ Delete</button>
+                                  </div>
+                                  {i < group.shifts.length-1 && <div style={{ borderTop: "1px dashed #e5e7eb", margin: "10px 0" }} />}
+                                </div>
+                              ))}
+                              {group.shifts.length > 1 && <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #e5e7eb", fontSize: 13, fontWeight: 700 }}>Day Total: {group.totalHours.toFixed(2)} hrs</div>}
                             </div>
                           ))}
-                          {group.shifts.length > 1 && <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #e5e7eb", fontSize: 13, fontWeight: 700 }}>Day Total: {group.totalHours.toFixed(2)} hrs</div>}
+                          <div style={{ padding: 14, background: "#111827", borderRadius: 14, color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div style={{ fontSize: 14 }}>Total Hours (this period)</div>
+                            <div style={{ fontSize: 24, fontWeight: 700, color: "#ffd700" }}>{filteredEntries.reduce((s, e) => s + (e.totalHours||0), 0).toFixed(2)} hrs</div>
+                          </div>
+                          <button style={{ ...bStyle(), background: "linear-gradient(135deg,#b8860b,#ffd700)", color: "#000", width: "100%", fontWeight: 800 }} onClick={downloadCSV}>⬇️ Download Timesheet CSV for Xero</button>
                         </div>
-                      ))}
-                      <div style={{ padding: 14, background: "#111827", borderRadius: 14, color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div style={{ fontSize: 14 }}>Total Hours (this period)</div>
-                        <div style={{ fontSize: 24, fontWeight: 700, color: "#ffd700" }}>{filteredEntries.reduce((s, e) => s + (e.totalHours||0), 0).toFixed(2)} hrs</div>
-                      </div>
-                      <button style={{ ...bStyle(), background: "linear-gradient(135deg,#b8860b,#ffd700)", color: "#000", width: "100%", fontWeight: 800 }} onClick={downloadCSV}>⬇️ Download Timesheet CSV for Xero</button>
+                      )}
+                    </>
+                  ) : (
+                    /* ── SUMMARY VIEW ── */
+                    <div style={{ display: "grid", gap: 12 }}>
+                      {summaryData.length === 0 ? (
+                        <div style={{ color: "#6b7280", padding: "8px 0" }}>No completed shifts for this period.</div>
+                      ) : (
+                        <>
+                          {summaryData.map(emp => {
+                            const isOpen = expandedSummaryEmpId === emp.employeeId;
+                            const week1Hrs = emp.week1.reduce((s, sh) => s + (sh.totalHours||0), 0);
+                            const week2Hrs = emp.week2.reduce((s, sh) => s + (sh.totalHours||0), 0);
+                            return (
+                              <div key={emp.employeeId} style={{ border: "1px solid #e5e7eb", borderRadius: 16, overflow: "hidden", background: "#fff" }}>
+                                {/* Card header — tap to expand */}
+                                <div
+                                  onClick={() => setExpandedSummaryEmpId(isOpen ? "" : emp.employeeId)}
+                                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", cursor: "pointer", background: isOpen ? "#f9fafb" : "#fff" }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                    <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#111827", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15, color: "#ffd700", flexShrink: 0 }}>
+                                      {emp.employeeName.slice(0,2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <div style={{ fontWeight: 700, fontSize: 16, color: "#111827" }}>{emp.employeeName}</div>
+                                      <span style={{ background: "#111827", color: "#fff", borderRadius: 6, padding: "2px 8px", fontSize: 11 }}>{emp.role}</span>
+                                    </div>
+                                  </div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <div style={{ textAlign: "right" }}>
+                                      <div style={{ fontSize: 22, fontWeight: 700, color: "#111827" }}>{emp.totalHours.toFixed(2)}</div>
+                                      <div style={{ fontSize: 11, color: "#6b7280" }}>total hrs</div>
+                                    </div>
+                                    <span style={{ fontSize: 16, color: "#6b7280" }}>{isOpen ? "▲" : "▼"}</span>
+                                  </div>
+                                </div>
+
+                                {/* Expanded shift breakdown */}
+                                {isOpen && (
+                                  <div style={{ borderTop: "1px solid #e5e7eb", padding: "0 16px 14px" }}>
+                                    {[{ label: getSummaryWeekLabel(selAdminFNRange, 1), shifts: emp.week1, hrs: week1Hrs }, { label: getSummaryWeekLabel(selAdminFNRange, 2), shifts: emp.week2, hrs: week2Hrs }].map(week => (
+                                      week.shifts.length > 0 && (
+                                        <div key={week.label}>
+                                          <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", padding: "12px 0 6px" }}>{week.label}</div>
+                                          {week.shifts.sort((a,b) => new Date(a.clockIn)-new Date(b.clockIn)).map(sh => (
+                                            <div key={sh.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 0", borderTop: "1px solid #f3f4f6" }}>
+                                              <div style={{ fontSize: 13, color: "#6b7280", minWidth: 88 }}>
+                                                {new Date(sh.clockIn).toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, weekday: "short", day: "numeric", month: "short" })}
+                                              </div>
+                                              <div style={{ fontSize: 13, color: "#111827" }}>
+                                                {formatTimeNZ(sh.clockIn)} → {sh.clockOut ? formatTimeNZ(sh.clockOut) : "🟢 open"}
+                                              </div>
+                                              <div style={{ fontSize: 13, fontWeight: 700, color: "#111827", minWidth: 60, textAlign: "right" }}>
+                                                {(sh.totalHours||0).toFixed(2)} hrs
+                                              </div>
+                                            </div>
+                                          ))}
+                                          <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 0", borderTop: "1px solid #e5e7eb", fontSize: 13, color: "#6b7280" }}>
+                                            Week total: <span style={{ fontWeight: 700, color: "#111827", marginLeft: 4 }}>{week.hrs.toFixed(2)} hrs</span>
+                                          </div>
+                                        </div>
+                                      )
+                                    ))}
+                                    {/* Fortnight total bar */}
+                                    <div style={{ marginTop: 8, padding: "10px 14px", background: "#111827", borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                      <div style={{ fontSize: 13, color: "#9ca3af" }}>Fortnight total</div>
+                                      <div style={{ fontSize: 18, fontWeight: 700, color: "#ffd700" }}>{emp.totalHours.toFixed(2)} hrs</div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                          {/* Period total across all employees */}
+                          <div style={{ padding: 14, background: "#111827", borderRadius: 14, color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div style={{ fontSize: 14 }}>All staff — period total</div>
+                            <div style={{ fontSize: 24, fontWeight: 700, color: "#ffd700" }}>{summaryData.reduce((s,e)=>s+e.totalHours,0).toFixed(2)} hrs</div>
+                          </div>
+                          <button style={{ ...bStyle(), background: "linear-gradient(135deg,#b8860b,#ffd700)", color: "#000", width: "100%", fontWeight: 800 }} onClick={downloadCSV}>⬇️ Download Timesheet CSV for Xero</button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
