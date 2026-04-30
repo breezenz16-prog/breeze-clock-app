@@ -216,12 +216,12 @@ export default function Page() {
     const closedInPeriod = entries.filter(x => x.clockOut && new Date(x.clockIn) >= s && new Date(x.clockIn) <= e);
     const byEmp = {};
     closedInPeriod.forEach(shift => {
-      const eid = shift.employeeId;
-      if (!byEmp[eid]) byEmp[eid] = { employeeId: eid, employeeName: shift.employeeName, role: shift.role, week1: [], week2: [], totalHours: 0 };
+      const key = shift.employeeName;
+      if (!byEmp[key]) byEmp[key] = { employeeId: shift.employeeId, employeeName: shift.employeeName, role: shift.role, week1: [], week2: [], totalHours: 0 };
       const ci = new Date(shift.clockIn);
       const bucket = ci <= week1End ? "week1" : "week2";
-      byEmp[eid][bucket].push(shift);
-      byEmp[eid].totalHours += shift.totalHours || 0;
+      byEmp[key][bucket].push(shift);
+      byEmp[key].totalHours += shift.totalHours || 0;
     });
     return Object.values(byEmp).sort((a, b) => a.employeeName.localeCompare(b.employeeName));
   }, [entries, selAdminFNRange]);
