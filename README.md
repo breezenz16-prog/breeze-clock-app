@@ -1,5 +1,5 @@
 # 🍛 Breeze Clock App
-**Version: 85**
+**Version: 88**
 Live URL: https://breeze-clock-app.vercel.app
 Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 16 Hood St, Hamilton Central · 07 949 8159
@@ -22,7 +22,9 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - 📍 GPS location lock (50m from restaurant)
 - 🧪 Test mode for noor & seema accounts
 - Live clock-in status — 🟢 Currently Clocked In / ⚪ Not Clocked In
-- Fortnight timesheet view with dates & hours
+- Fortnight timesheet — Week 1 & Week 2 breakdown
+- Each shift shows date, clock in → clock out, and hours
+- Week subtotal and fortnight total in gold bar
 - Timesheet submission with "Are you sure?" confirmation
 - ✅ Staff can see Approved / ⏳ Pending status on submitted timesheets
 
@@ -56,6 +58,16 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - All staff period total at the bottom
 - Split shifts on the same day shown as separate rows
 - CSV download available in both List and Summary views
+
+## ⚠️ Shift Warnings
+- Orange border & ⚠️ badge on any shift open or over 12 hrs
+- If staff clocks in with a forgotten open shift from a previous day — auto-closes it at midnight and shows a warning message to check with manager
+
+## 🇳🇿 NZ Public Holidays
+- Shifts on public holidays highlighted in yellow
+- Holiday name shown on the shift card
+- Reminder: "Public holiday pay rate applies"
+- Covers 2026–2027 NZ public holidays including Matariki, ANZAC Day, Waitangi Day, Christmas, Boxing Day, and more
 
 ## 📅 Pay Cycle
 - Fortnightly periods anchored to 13/04/2026
