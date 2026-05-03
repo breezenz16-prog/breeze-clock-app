@@ -250,15 +250,28 @@ export default function Page() {
   function logout() { setLoggedIn(false); setEmpId(""); setEmpEmail(""); setEmpPw(""); setMsg("Staff logged out."); }
   async function clockIn() {
     if (!selEmp) return;
-    if (entries.some(e => e.employeeId === selEmp.id && !e.clockOut)) { setMsg("Already clocked in."); return; }
     const isTest = TEST_ACCOUNTS.includes(selEmp.email?.toLowerCase());
+    const openShift = entries.find(e => e.employeeId === selEmp.id && !e.clockOut);
+    if (openShift) {
+      const openDate = formatDateNZ(openShift.clockIn);
+      const todayDate = formatDateNZ(nowIso());
+      if (openDate === todayDate) { setMsg("Already clocked in."); return; }
+      const clockInDate = new Date(openShift.clockIn);
+      const midnight = new Date(clockInDate);
+      midnight.setDate(clockInDate.getDate() + 1);
+      midnight.setHours(0, 0, 0, 0);
+      try {
+        await updateDoc(doc(db, "shifts", openShift.id), { clockOut: midnight.toISOString(), totalHours: hoursBetween(openShift.clockIn, midnight.toISOString()) });
+        setMsg("⚠️ You had an open shift from " + openDate + " — it has been closed at midnight. Please check with your manager.");
+      } catch { setMsg("Error closing previous shift."); return; }
+    }
     if (!isTest) {
       setMsg("📍 Checking your location...");
-      try { await checkLocation(); } catch (err) { setMsg(`❌ ${err}`); return; }
+      try { await checkLocation(); } catch (err) { setMsg("❌ " + err); return; }
     }
     try {
       await addDoc(collection(db, "shifts"), { employeeId: selEmp.id, employeeName: selEmp.name, role: selEmp.role, clockIn: nowIso(), clockOut: null, totalHours: null });
-      setMsg(`${selEmp.name} clocked in. ✅`);
+      setMsg(selEmp.name + " clocked in. ✅");
     } catch { setMsg("Error clocking in."); }
   }
   async function clockOut() {
@@ -654,7 +667,10 @@ export default function Page() {
                             g[k].shifts.push(e); g[k].totalHours += e.totalHours || 0;
                             return g;
                           }, {})).sort((a, b) => b.sortValue - a.sortValue).map(group => (
-                            <div key={`${group.employeeId}_${group.date}`} style={{ border: "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: "#f9fafb" }}>
+                            <div key={`${group.employeeId}_${group.date}`} style={{ border: group.shifts.some(s => !s.clockOut || (s.totalHours||0) > 12) ? "2px solid #f97316" : "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: group.shifts.some(s => !s.clockOut || (s.totalHours||0) > 12) ? "#fff7ed" : "#f9fafb" }}>
+                              {group.shifts.some(s => !s.clockOut || (s.totalHours||0) > 12) && (
+                                <div style={{ background: "#f97316", color: "#fff", borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 700, marginBottom: 10, display: "inline-block" }}>⚠️ Check this shift</div>
+                              )}
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                                 <div>
                                   <div style={{ fontWeight: 700, fontSize: 16 }}>{group.employeeName}</div>
