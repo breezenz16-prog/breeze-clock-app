@@ -23,6 +23,28 @@ const TEST_ACCOUNTS = ["noor@breeze.local", "seema@breeze.local"];
 const RESTAURANT_LAT = -37.7870;
 const RESTAURANT_LNG = 175.2793;
 const MAX_DISTANCE_METERS = 50;
+const NZ_PUBLIC_HOLIDAYS = {
+  "2026-01-01": "New Year's Day",
+  "2026-01-02": "Day after New Year's Day",
+  "2026-02-06": "Waitangi Day",
+  "2026-04-03": "Good Friday",
+  "2026-04-06": "Easter Monday",
+  "2026-04-25": "ANZAC Day",
+  "2026-04-27": "ANZAC Day (observed)",
+  "2026-06-01": "King's Birthday",
+  "2026-06-28": "Matariki",
+  "2026-10-26": "Labour Day",
+  "2026-12-25": "Christmas Day",
+  "2026-12-26": "Boxing Day",
+  "2026-12-28": "Boxing Day (observed)",
+  "2027-01-01": "New Year's Day",
+  "2027-01-04": "New Year's Day (observed)",
+};
+function getPublicHoliday(isoDateStr) {
+  const d = new Date(isoDateStr);
+  const key = d.toLocaleDateString("en-CA", { timeZone: NZ_TIMEZONE });
+  return NZ_PUBLIC_HOLIDAYS[key] || null;
+}
 async function sendEmailNotification(staffName, role, action) {
   try {
     const time = new Date().toLocaleString("en-NZ", { timeZone: NZ_TIMEZONE, hour: "2-digit", minute: "2-digit", hour12: true, weekday: "short", day: "numeric", month: "short" });
@@ -693,9 +715,14 @@ export default function Page() {
                             g[k].shifts.push(e); g[k].totalHours += e.totalHours || 0;
                             return g;
                           }, {})).sort((a, b) => b.sortValue - a.sortValue).map(group => (
-                            <div key={`${group.employeeId}_${group.date}`} style={{ border: group.shifts.some(s => !s.clockOut || (s.totalHours||0) > 12) ? "2px solid #f97316" : "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: group.shifts.some(s => !s.clockOut || (s.totalHours||0) > 12) ? "#fff7ed" : "#f9fafb" }}>
+                            <div key={`${group.employeeId}_${group.date}`} style={{ border: group.shifts.some(s => !s.clockOut || (s.totalHours||0) > 12) ? "2px solid #f97316" : getPublicHoliday(group.shifts[0].clockIn) ? "1px solid #d97706" : "1px solid #e5e7eb", borderRadius: 14, padding: 14, background: group.shifts.some(s => !s.clockOut || (s.totalHours||0) > 12) ? "#fff7ed" : getPublicHoliday(group.shifts[0].clockIn) ? "#fffbeb" : "#f9fafb" }}>
                               {group.shifts.some(s => !s.clockOut || (s.totalHours||0) > 12) && (
                                 <div style={{ background: "#f97316", color: "#fff", borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 700, marginBottom: 10, display: "inline-block" }}>⚠️ Check this shift</div>
+                              )}
+                              {getPublicHoliday(group.shifts[0].clockIn) && (
+                                <div style={{ background: "#fef3c7", color: "#92400e", borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 700, marginBottom: 10, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                                  🇳🇿 {getPublicHoliday(group.shifts[0].clockIn)} — Public holiday pay rate applies
+                                </div>
                               )}
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                                 <div>
