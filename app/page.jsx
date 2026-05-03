@@ -159,6 +159,11 @@ export default function Page() {
   // NEW: Summary view toggle and expanded employee cards
   const [adminViewMode, setAdminViewMode] = useState("list");
   const [expandedSummaryEmpId, setExpandedSummaryEmpId] = useState("");
+  // Birthday & joining date fields
+  const [newBirthday, setNewBirthday] = useState("");
+  const [newJoinDate, setNewJoinDate] = useState("");
+  const [editBirthday, setEditBirthday] = useState("");
+  const [editJoinDate, setEditJoinDate] = useState("");
   const fnOpts = useMemo(() => getFortnightOptions(), []);
   useEffect(() => {
     if (!selFN && fnOpts[0]) setSelFN(fnOpts[0].value);
@@ -340,15 +345,15 @@ export default function Page() {
     if (!name||!email||!pw) { setMsg("Please fill all fields."); return; }
     if (employees.some(e => e.email.toLowerCase() === email)) { setMsg("Email already exists."); return; }
     try {
-      await addDoc(collection(db, "employees"), { name, email, password: pw, role: newRole, active: true });
-      setNewName(""); setNewEmail(""); setNewEmpPw(""); setNewRole("FOH"); setMsg("Employee created. ✅");
+      await addDoc(collection(db, "employees"), { name, email, password: pw, role: newRole, active: true, birthday: newBirthday || null, joinDate: newJoinDate || null });
+      setNewName(""); setNewEmail(""); setNewEmpPw(""); setNewRole("FOH"); setNewBirthday(""); setNewJoinDate(""); setMsg("Employee created. ✅");
     } catch { setMsg("Error creating employee."); }
   }
   async function saveEditEmp(id) {
     const name = editName.trim(), email = editEmail.trim().toLowerCase();
     if (!name||!email) { setMsg("Please fill all fields."); return; }
     if (employees.some(e => e.id !== id && e.email.toLowerCase() === email)) { setMsg("Email already in use."); return; }
-    try { await updateDoc(doc(db, "employees", id), { name, email, role: editRole }); setEditEmpId(""); setMsg("Employee updated. ✅"); }
+    try { await updateDoc(doc(db, "employees", id), { name, email, role: editRole, birthday: editBirthday || null, joinDate: editJoinDate || null }); setEditEmpId(""); setMsg("Employee updated. ✅"); }
     catch { setMsg("Error updating."); }
   }
   async function savePwReset(id) {
@@ -414,6 +419,34 @@ export default function Page() {
     return `Week ${weekNum} (${weekStart.toLocaleDateString("en-NZ",{timeZone:NZ_TIMEZONE,day:"numeric",month:"short"})} – ${weekEnd.toLocaleDateString("en-NZ",{timeZone:NZ_TIMEZONE,day:"numeric",month:"short"})})`;
   }
 
+  // Birthday helpers
+  function isBirthdayToday(birthdayStr) {
+    if (!birthdayStr) return false;
+    const today = new Date().toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, month: "2-digit", day: "2-digit" });
+    const bday = new Date(birthdayStr).toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, month: "2-digit", day: "2-digit" });
+    return today === bday;
+  }
+  function formatBirthday(birthdayStr) {
+    if (!birthdayStr) return null;
+    return new Date(birthdayStr).toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, day: "numeric", month: "short" });
+  }
+  function formatJoinDate(joinStr) {
+    if (!joinStr) return null;
+    const joined = new Date(joinStr);
+    const now = new Date();
+    const diffMs = now - joined;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffMonths = Math.floor(diffDays / 30.44);
+    const years = Math.floor(diffMonths / 12);
+    const months = diffMonths % 12;
+    let duration = "";
+    if (years > 0 && months > 0) duration = years + " yr " + months + " mo";
+    else if (years > 0) duration = years + " yr";
+    else if (months > 0) duration = months + " mo";
+    else duration = diffDays + " days";
+    return { label: joined.toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, day: "numeric", month: "short", year: "numeric" }), duration };
+  }
+
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "Arial" }}>
       <style>{`@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:0.85}}@keyframes fadeInUp{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:translateY(0)}}@keyframes dot{0%,80%,100%{opacity:0}40%{opacity:1}}.dot1{animation:dot 1.4s infinite 0s}.dot2{animation:dot 1.4s infinite 0.2s}.dot3{animation:dot 1.4s infinite 0.4s}`}</style>
@@ -463,7 +496,12 @@ export default function Page() {
               ) : (
                 <div style={{ display: "grid", gap: 16 }}>
                   <div style={{ ...cStyle(), padding: 16, background: "#111827", borderRadius: 16 }}>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: "#ffd700" }}>👋 Welcome, {selEmp?.name}!</div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#ffd700" }}>
+                      {selEmp && isBirthdayToday(selEmp.birthday) ? "🎂 Happy Birthday, " + selEmp.name + "!" : "👋 Welcome, " + (selEmp?.name || "") + "!"}
+                    </div>
+                    {selEmp && isBirthdayToday(selEmp.birthday) && (
+                      <div style={{ marginTop: 6, background: "#fef3c7", borderRadius: 8, padding: "6px 12px", fontSize: 13, color: "#92400e", fontWeight: 600 }}>🎉 Happy Birthday from the Breeze team!</div>
+                    )}
                     <div style={{ color: "#9ca3af", marginTop: 6, fontSize: 14 }}>{liveTime.toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, weekday: "long", day: "numeric", month: "long" })}</div>
                     <div style={{ marginTop: 8, display: "inline-block", background: entries.some(e => e.employeeId === selEmp?.id && !e.clockOut) ? "#065f46" : "#1f2937", borderRadius: 10, padding: "4px 12px", fontSize: 13, fontWeight: 600, color: entries.some(e => e.employeeId === selEmp?.id && !e.clockOut) ? "#6ee7b7" : "#9ca3af" }}>
                       {entries.some(e => e.employeeId === selEmp?.id && !e.clockOut) ? "🟢 Currently Clocked In" : "⚪ Not Clocked In"}
@@ -571,6 +609,15 @@ export default function Page() {
               </div>
             ) : (
               <div style={{ display: "grid", gap: 16 }}>
+                {employees.filter(e => e.active !== false && isBirthdayToday(e.birthday)).map(e => (
+                  <div key={e.id} style={{ background: "#fef3c7", border: "1px solid #d97706", borderRadius: 14, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 20 }}>🎂</span>
+                    <div>
+                      <div style={{ fontWeight: 700, color: "#92400e", fontSize: 14 }}>Today is {e.name}'s birthday!</div>
+                      <div style={{ fontSize: 12, color: "#92400e" }}>Don't forget to wish them well 🎉</div>
+                    </div>
+                  </div>
+                ))}
                 <div style={{ display: "flex", justifyContent: "center" }}>
                   <button style={{ ...bStyle("danger"), minWidth: 180 }} onClick={() => { setAdminUnlocked(false); setMsg("Admin logged out."); }}>Log Out (Admin)</button>
                 </div>
@@ -583,6 +630,8 @@ export default function Page() {
                     <select style={iStyle()} value={newRole} onChange={e => setNewRole(e.target.value)}>
                       {roleOptions.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
+                    <div><div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>🎂 Birthday (optional)</div><input style={iStyle()} type="date" value={newBirthday} onChange={e => setNewBirthday(e.target.value)} /></div>
+                    <div><div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>📅 Joining date (optional)</div><input style={iStyle()} type="date" value={newJoinDate} onChange={e => setNewJoinDate(e.target.value)} /></div>
                   </div>
                   <button style={{ ...bStyle(), width: "100%" }} onClick={addEmployee}>Add Employee</button>
                   <div style={{ display: "grid", gap: 12, marginTop: 16 }}>
@@ -595,6 +644,8 @@ export default function Page() {
                             <select style={iStyle()} value={editRole} onChange={e => setEditRole(e.target.value)}>
                               {roleOptions.map(r => <option key={r} value={r}>{r}</option>)}
                             </select>
+                            <div><div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>🎂 Birthday</div><input style={iStyle()} type="date" value={editBirthday} onChange={e => setEditBirthday(e.target.value)} /></div>
+                            <div><div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>📅 Joining date</div><input style={iStyle()} type="date" value={editJoinDate} onChange={e => setEditJoinDate(e.target.value)} /></div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                               <button style={bStyle()} onClick={() => saveEditEmp(emp.id)}>Save</button>
                               <button style={bStyle("ghost")} onClick={() => setEditEmpId("")}>Cancel</button>
@@ -615,15 +666,20 @@ export default function Page() {
                               <div>
                                 <div style={{ fontWeight: 700, fontSize: 16 }}>{emp.name}</div>
                                 <div style={{ color: "#6b7280", fontSize: 13, marginTop: 2, wordBreak: "break-all" }}>{emp.email}</div>
+                                <div style={{ display: "flex", gap: 12, marginTop: 4, flexWrap: "wrap" }}>
+                                  {emp.birthday && <div style={{ fontSize: 12, color: isBirthdayToday(emp.birthday) ? "#92400e" : "#6b7280", fontWeight: isBirthdayToday(emp.birthday) ? 700 : 400 }}>🎂 {isBirthdayToday(emp.birthday) ? "Today! " : ""}{formatBirthday(emp.birthday)}</div>}
+                                  {emp.joinDate && (() => { const jd = formatJoinDate(emp.joinDate); return jd ? <div style={{ fontSize: 12, color: "#6b7280" }}>📅 Joined {jd.label} · {jd.duration}</div> : null; })()}
+                                </div>
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 <span style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "2px 10px", fontSize: 12 }}>{emp.role}</span>
+                                {isBirthdayToday(emp.birthday) && <span style={{ fontSize: 16 }}>🎂</span>}
                                 <span style={{ fontSize: 18, color: "#6b7280" }}>{expandedEmpId === emp.id ? "▲" : "▼"}</span>
                               </div>
                             </div>
                             {expandedEmpId === emp.id && (
                               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid #e5e7eb" }}>
-                                <button style={bStyle("secondary")} onClick={() => { setEditEmpId(emp.id); setEditName(emp.name); setEditEmail(emp.email); setEditRole(emp.role); }}>✏️ Edit</button>
+                                <button style={bStyle("secondary")} onClick={() => { setEditEmpId(emp.id); setEditName(emp.name); setEditEmail(emp.email); setEditRole(emp.role); setEditBirthday(emp.birthday||""); setEditJoinDate(emp.joinDate||""); }}>✏️ Edit</button>
                                 <button style={bStyle("secondary")} onClick={() => { setResetPwId(emp.id); setResetPwVal(emp.password||""); }}>🔑 Reset PW</button>
                                 <button style={bStyle("danger")} onClick={() => removeEmp(emp.id)}>🗑️ Remove</button>
                               </div>
