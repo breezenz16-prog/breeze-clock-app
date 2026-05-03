@@ -459,26 +459,52 @@ export default function Page() {
                     <select style={iStyle()} value={selFN} onChange={e => setSelFN(e.target.value)}>
                       {fnOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
-                    <div style={{ fontSize: 32, fontWeight: 700, marginTop: 14 }}>{fnHours.toFixed(2)} hrs</div>
-                    <div style={{ color: "#6b7280", marginTop: 4 }}>Total hours for selected fortnight (NZ time)</div>
-                    <div style={{ overflowX: "auto", marginTop: 14 }}>
-                      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                        <thead><tr><th style={{ textAlign: "left", padding: "8px 0" }}>Date</th><th style={{ textAlign: "right", padding: "8px 0" }}>Hours</th></tr></thead>
-                        <tbody>
-                          {fnEntries.length === 0 ? (
-                            <tr><td colSpan={2} style={{ padding: "8px 0", color: "#6b7280" }}>No records</td></tr>
-                          ) : fnEntries.map(row => (
-                            <tr key={row.date}>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>
-                                <div>{row.date}</div>
-                                <div style={{ color: "#6b7280", fontSize: 12 }}>{row.shifts.map(s => `${formatDateTimeNZ(s.clockIn)} - ${s.clockOut ? formatDateTimeNZ(s.clockOut) : "Open"}`).join(" | ")}</div>
-                              </td>
-                              <td style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb", textAlign: "right" }}>{row.hours.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    {fnEntries.length === 0 ? (
+                      <div style={{ color: "#6b7280", marginTop: 14 }}>No records for this period.</div>
+                    ) : (
+                      <div style={{ marginTop: 14, display: "grid", gap: 0 }}>
+                        {(() => {
+                          if (!selFNRange) return null;
+                          const s = new Date(selFNRange.startIso);
+                          const week1End = new Date(s); week1End.setDate(s.getDate() + 6); week1End.setHours(23,59,59,999);
+                          const week1 = fnEntries.filter(r => new Date(r.shifts[0].clockIn) <= week1End);
+                          const week2 = fnEntries.filter(r => new Date(r.shifts[0].clockIn) > week1End);
+                          const week1Hrs = week1.reduce((s,r) => s+r.hours, 0);
+                          const week2Hrs = week2.reduce((s,r) => s+r.hours, 0);
+                          const renderWeek = (rows, label, weekHrs) => rows.length === 0 ? null : (
+                            <div key={label} style={{ marginBottom: 14 }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", padding: "10px 0 6px" }}>{label}</div>
+                              {rows.map(row => row.shifts.map(sh => (
+                                <div key={sh.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 0", borderTop: "1px solid #f3f4f6" }}>
+                                  <div style={{ fontSize: 13, color: "#6b7280", minWidth: 80 }}>
+                                    {new Date(sh.clockIn).toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, weekday: "short", day: "numeric", month: "short" })}
+                                  </div>
+                                  <div style={{ fontSize: 13, color: "#111827" }}>
+                                    {formatTimeNZ(sh.clockIn)} → {sh.clockOut ? formatTimeNZ(sh.clockOut) : "🟢 open"}
+                                  </div>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: "#111827", minWidth: 56, textAlign: "right" }}>
+                                    {(sh.totalHours||0).toFixed(2)} hrs
+                                  </div>
+                                </div>
+                              )))}
+                              <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 0", borderTop: "1px solid #e5e7eb", fontSize: 13, color: "#6b7280" }}>
+                                Week total: <span style={{ fontWeight: 700, color: "#111827", marginLeft: 4 }}>{weekHrs.toFixed(2)} hrs</span>
+                              </div>
+                            </div>
+                          );
+                          return (
+                            <>
+                              {renderWeek(week1, getSummaryWeekLabel(selFNRange, 1), week1Hrs)}
+                              {renderWeek(week2, getSummaryWeekLabel(selFNRange, 2), week2Hrs)}
+                              <div style={{ padding: "10px 14px", background: "#111827", borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div style={{ fontSize: 13, color: "#9ca3af" }}>Fortnight total</div>
+                                <div style={{ fontSize: 18, fontWeight: 700, color: "#ffd700" }}>{fnHours.toFixed(2)} hrs</div>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
                     <div style={{ marginTop: 12 }}>
                       {timesheetSubmissions.filter(t => t.employeeId === empId).length > 0 && (
                         <div style={{ marginBottom: 12 }}>
