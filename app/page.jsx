@@ -16,6 +16,31 @@ const ADMIN_EMAIL = "breezenz16@gmail.com";
 const DEFAULT_ADMIN_PASSWORD = "02041462704";
 const NZ_TIMEZONE = "Pacific/Auckland";
 const ADMIN_IDLE_TIMEOUT_MS = 10 * 60 * 1000;
+const SHIFT_QUOTES = [
+  "Great service starts with a great attitude.",
+  "Every guest deserves to feel like a regular.",
+  "The secret ingredient is always the team.",
+  "A smile costs nothing but means everything.",
+  "Good food, good mood — you make it happen.",
+  "Teamwork makes the dream work.",
+  "Your energy sets the tone for the whole shift.",
+  "Small acts of kindness make big impressions.",
+  "Hospitality is making people feel at home, even when you're not.",
+  "The best ingredient in any dish is passion.",
+];
+const SHIFT_FACTS = [
+  "The word 'restaurant' comes from the French word meaning 'to restore'.",
+  "Naan bread has been around for over 2,500 years!",
+  "India has the world's largest vegetarian population.",
+  "Chai means 'tea' in Hindi — so 'chai tea' means 'tea tea'!",
+  "Saffron is the world's most expensive spice by weight.",
+  "The first restaurant in the world opened in Paris in 1765.",
+  "Turmeric has been used in cooking for over 4,000 years.",
+  "Basmati rice can be stored for decades and actually improves with age!",
+  "Cardamom is the third most expensive spice in the world after saffron and vanilla.",
+  "The mango is the national fruit of India, Pakistan and the Philippines.",
+];
+const DAY_MESSAGES = ["Happy Sunday! A quiet start to the week.", "Happy Monday! New week, fresh start. Let's go!", "Happy Tuesday! You're doing great. Keep it up!", "Halfway through the week! Wednesday vibes.", "Happy Thursday! Nearly there!", "It's Friday! The weekend is almost here!", "Happy Saturday! Busiest day — you've got this!"];
 const EMAILJS_SERVICE_ID = "service_22q7wqe";
 const EMAILJS_TEMPLATE_ID = "template_9npp595";
 const EMAILJS_PUBLIC_KEY = "0Gyw2c9jKIx3MCFKx";
@@ -512,6 +537,25 @@ export default function Page() {
                     {selEmp && isBirthdayToday(selEmp.birthday) && (
                       <div style={{ marginTop: 6, background: "#fef3c7", borderRadius: 8, padding: "6px 12px", fontSize: 13, color: "#92400e", fontWeight: 600 }}>🎉 Happy Birthday from the Breeze team!</div>
                     )}
+                    {(() => {
+                      const d = liveTime.getDay();
+                      const seed = liveTime.getDate() + liveTime.getMonth() * 31;
+                      const quote = SHIFT_QUOTES[seed % SHIFT_QUOTES.length];
+                      const fact = SHIFT_FACTS[(seed + 3) % SHIFT_FACTS.length];
+                      return (
+                        <>
+                          <div style={{ marginTop: 8, background: "#1a1a1a", borderRadius: 10, padding: "6px 12px", fontSize: 12, color: "#ffd700", fontWeight: 600 }}>{DAY_MESSAGES[d]}</div>
+                          <div style={{ marginTop: 8, background: "#1a1a1a", borderRadius: 10, padding: "10px 12px" }}>
+                            <div style={{ fontSize: 10, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Quote of the shift</div>
+                            <div style={{ fontSize: 12, color: "#e5e7eb", fontStyle: "italic", lineHeight: 1.5 }}>"{quote}"</div>
+                          </div>
+                          <div style={{ marginTop: 8, background: "#1a1a1a", borderRadius: 10, padding: "10px 12px" }}>
+                            <div style={{ fontSize: 10, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Did you know?</div>
+                            <div style={{ fontSize: 12, color: "#e5e7eb", lineHeight: 1.5 }}>{fact}</div>
+                          </div>
+                        </>
+                      );
+                    })()}
                     <div style={{ color: "#9ca3af", marginTop: 6, fontSize: 14 }}>{liveTime.toLocaleDateString("en-NZ", { timeZone: NZ_TIMEZONE, weekday: "long", day: "numeric", month: "long" })}</div>
                     <div style={{ marginTop: 8, display: "inline-block", background: entries.some(e => e.employeeId === selEmp?.id && !e.clockOut) ? "#065f46" : "#1f2937", borderRadius: 10, padding: "4px 12px", fontSize: 13, fontWeight: 600, color: entries.some(e => e.employeeId === selEmp?.id && !e.clockOut) ? "#6ee7b7" : "#9ca3af" }}>
                       {entries.some(e => e.employeeId === selEmp?.id && !e.clockOut) ? "🟢 Currently Clocked In" : "⚪ Not Clocked In"}
