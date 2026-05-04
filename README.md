@@ -1,5 +1,5 @@
 # 🍛 Breeze Clock App
-**Version: 88**
+**Version: 90**
 Live URL: https://breeze-clock-app.vercel.app
 Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 16 Hood St, Hamilton Central · 07 949 8159
@@ -27,6 +27,7 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - Week subtotal and fortnight total in gold bar
 - Timesheet submission with "Are you sure?" confirmation
 - ✅ Staff can see Approved / ⏳ Pending status on submitted timesheets
+- 🎂 Happy Birthday message shown on staff portal on their birthday
 
 ## 👑 Admin Portal
 - Password protected login
@@ -48,6 +49,13 @@ Breeze Indian Restaurant — Staff Clock In, Timesheet & Management System
 - ↩️ Undo timesheet approval
 - ⬇️ Download Timesheet CSV for Xero
 - 12-hour AM/PM time format
+
+## 👤 Employee Profiles
+- 🎂 Birthday field (optional) — shown on employee card
+- 📅 Joining date field (optional) — shown with duration e.g. "1 yr 2 months"
+- 🎂 icon shown on employee card on their birthday
+- Yellow birthday banner in Admin View on the day
+- 📧 Send reminder email button on birthday banner — fires to breezenz16@gmail.com
 
 ## 📊 Summary View
 - List / Summary toggle in Admin View
