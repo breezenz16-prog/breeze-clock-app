@@ -19,6 +19,7 @@ const ADMIN_IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 const EMAILJS_SERVICE_ID = "service_22q7wqe";
 const EMAILJS_TEMPLATE_ID = "template_9npp595";
 const EMAILJS_PUBLIC_KEY = "0Gyw2c9jKIx3MCFKx";
+const EMAILJS_BIRTHDAY_TEMPLATE_ID = "template_14chz3h";
 const TEST_ACCOUNTS = ["noor@breeze.local", "seema@breeze.local"];
 const RESTAURANT_LAT = -37.7870;
 const RESTAURANT_LNG = 175.2793;
@@ -54,6 +55,15 @@ async function sendEmailNotification(staffName, role, action) {
       body: JSON.stringify({ service_id: EMAILJS_SERVICE_ID, template_id: EMAILJS_TEMPLATE_ID, user_id: EMAILJS_PUBLIC_KEY, template_params: { staff_name: staffName, role, action, time } }),
     });
   } catch (err) { console.error("Email notification failed:", err); }
+}
+async function sendBirthdayEmail(staffName) {
+  try {
+    await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ service_id: EMAILJS_SERVICE_ID, template_id: EMAILJS_BIRTHDAY_TEMPLATE_ID, user_id: EMAILJS_PUBLIC_KEY, template_params: { staff_name: staffName } }),
+    });
+  } catch (err) { console.error("Birthday email failed:", err); }
 }
 function getDistanceMeters(lat1, lng1, lat2, lng2) {
   const R = 6371000;
@@ -610,12 +620,15 @@ export default function Page() {
             ) : (
               <div style={{ display: "grid", gap: 16 }}>
                 {employees.filter(e => e.active !== false && isBirthdayToday(e.birthday)).map(e => (
-                  <div key={e.id} style={{ background: "#fef3c7", border: "1px solid #d97706", borderRadius: 14, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 20 }}>🎂</span>
-                    <div>
-                      <div style={{ fontWeight: 700, color: "#92400e", fontSize: 14 }}>Today is {e.name}'s birthday!</div>
-                      <div style={{ fontSize: 12, color: "#92400e" }}>Don't forget to wish them well 🎉</div>
+                  <div key={e.id} style={{ background: "#fef3c7", border: "1px solid #d97706", borderRadius: 14, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 20 }}>🎂</span>
+                      <div>
+                        <div style={{ fontWeight: 700, color: "#92400e", fontSize: 14 }}>Today is {e.name}'s birthday!</div>
+                        <div style={{ fontSize: 12, color: "#92400e" }}>Don't forget to wish them well 🎉</div>
+                      </div>
                     </div>
+                    <button style={{ background: "#92400e", color: "#fff", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }} onClick={() => { sendBirthdayEmail(e.name); setMsg("🎂 Birthday reminder sent to your email! ✅"); }}>📧 Send reminder</button>
                   </div>
                 ))}
                 <div style={{ display: "flex", justifyContent: "center" }}>
