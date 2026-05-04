@@ -199,6 +199,11 @@ export default function Page() {
   const [newJoinDate, setNewJoinDate] = useState("");
   const [editBirthday, setEditBirthday] = useState("");
   const [editJoinDate, setEditJoinDate] = useState("");
+  // Staff messages
+  const [staffMessages, setStaffMessages] = useState([]);
+  const [msgTarget, setMsgTarget] = useState("all");
+  const [msgTargetEmpId, setMsgTargetEmpId] = useState("");
+  const [msgText, setMsgText] = useState("");
   const fnOpts = useMemo(() => getFortnightOptions(), []);
   useEffect(() => {
     if (!selFN && fnOpts[0]) setSelFN(fnOpts[0].value);
@@ -228,7 +233,10 @@ export default function Page() {
       if (snap.empty) addDoc(collection(db, "settings"), defaultAdminSettings);
       else setAdminSettings(snap.docs[0].data());
     });
-    return () => { u1(); u2(); u3(); u4(); };
+    const u5 = onSnapshot(collection(db, "staffMessages"), snap => {
+      setStaffMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => { u1(); u2(); u3(); u4(); u5(); };
   }, []);
   useEffect(() => {
     if (!adminUnlocked) return;
@@ -454,6 +462,34 @@ export default function Page() {
     return `Week ${weekNum} (${weekStart.toLocaleDateString("en-NZ",{timeZone:NZ_TIMEZONE,day:"numeric",month:"short"})} – ${weekEnd.toLocaleDateString("en-NZ",{timeZone:NZ_TIMEZONE,day:"numeric",month:"short"})})`;
   }
 
+  // Staff messaging
+  async function sendStaffMessage() {
+    if (!msgText.trim()) { setMsg("Please enter a message."); return; }
+    try {
+      await addDoc(collection(db, "staffMessages"), {
+        text: msgText.trim(),
+        target: msgTarget,
+        targetEmpId: msgTarget === "one" ? msgTargetEmpId : null,
+        targetEmpName: msgTarget === "one" ? (employees.find(e => e.id === msgTargetEmpId)?.name || "") : "All staff",
+        sentAt: nowIso(),
+        dismissed: []
+      });
+      setMsgText(""); setMsg("Message sent. ✅");
+    } catch { setMsg("Error sending message."); }
+  }
+  async function dismissStaffMessage(id) {
+    try {
+      const m = staffMessages.find(x => x.id === id);
+      if (!m) return;
+      const dismissed = [...(m.dismissed || []), empId];
+      await updateDoc(doc(db, "staffMessages", id), { dismissed });
+    } catch { setMsg("Error dismissing message."); }
+  }
+  async function deleteStaffMessage(id) {
+    try { await deleteDoc(doc(db, "staffMessages", id)); setMsg("Message deleted. ✅"); }
+    catch { setMsg("Error deleting message."); }
+  }
+
   // Birthday helpers
   function isBirthdayToday(birthdayStr) {
     if (!birthdayStr) return false;
@@ -537,6 +573,20 @@ export default function Page() {
                     {selEmp && isBirthdayToday(selEmp.birthday) && (
                       <div style={{ marginTop: 6, background: "#fef3c7", borderRadius: 8, padding: "6px 12px", fontSize: 13, color: "#92400e", fontWeight: 600 }}>🎉 Happy Birthday from the Breeze team!</div>
                     )}
+                    {staffMessages.filter(m => {
+                      if (m.dismissed && m.dismissed.includes(empId)) return false;
+                      if (m.target === "all") return true;
+                      if (m.target === "one" && m.targetEmpId === empId) return true;
+                      return false;
+                    }).map(m => (
+                      <div key={m.id} style={{ marginTop: 8, background: m.target === "all" ? "#1e3a5f" : "#1a2e1a", border: "1px solid " + (m.target === "all" ? "#3b82f6" : "#16a34a"), borderRadius: 10, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                        <div>
+                          <div style={{ fontSize: 10, color: m.target === "all" ? "#93c5fd" : "#86efac", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 3 }}>📢 Message from manager</div>
+                          <div style={{ fontSize: 13, color: "#e5e7eb", lineHeight: 1.5 }}>{m.text}</div>
+                        </div>
+                        <button style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 16, padding: 0, flexShrink: 0 }} onClick={() => dismissStaffMessage(m.id)}>✕</button>
+                      </div>
+                    ))}
                     {(() => {
                       const d = liveTime.getDay();
                       const seed = liveTime.getDate() + liveTime.getMonth() * 31;
@@ -746,6 +796,40 @@ export default function Page() {
                       </div>
                     ))}
                   </div>
+                </div>
+                <div style={cStyle()}>
+                  <h3 style={{ marginTop: 0 }}>📢 Send Message to Staff</h3>
+                  <div style={{ display: "grid", gap: 10 }}>
+                    <div style={{ display: "flex", border: "1px solid #d1d5db", borderRadius: 10, overflow: "hidden" }}>
+                      <button onClick={() => setMsgTarget("all")} style={{ flex: 1, padding: "8px", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none", background: msgTarget === "all" ? "#111827" : "#f3f4f6", color: msgTarget === "all" ? "#fff" : "#6b7280" }}>All staff</button>
+                      <button onClick={() => setMsgTarget("one")} style={{ flex: 1, padding: "8px", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none", background: msgTarget === "one" ? "#111827" : "#f3f4f6", color: msgTarget === "one" ? "#fff" : "#6b7280" }}>One staff member</button>
+                    </div>
+                    {msgTarget === "one" && (
+                      <select style={iStyle()} value={msgTargetEmpId} onChange={e => setMsgTargetEmpId(e.target.value)}>
+                        <option value="">Select employee...</option>
+                        {employees.filter(e => e.active !== false).map(emp => <option key={emp.id} value={emp.id}>{emp.name} ({emp.role})</option>)}
+                      </select>
+                    )}
+                    <textarea style={{ ...iStyle(), height: 80, resize: "none" }} placeholder="Type your message here..." value={msgText} onChange={e => setMsgText(e.target.value)} />
+                    <button style={{ ...bStyle(), width: "100%" }} onClick={sendStaffMessage}>📢 Send Message</button>
+                  </div>
+                  {staffMessages.length > 0 && (
+                    <div style={{ marginTop: 16 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>Sent messages</div>
+                      <div style={{ display: "grid", gap: 8 }}>
+                        {staffMessages.map(m => (
+                          <div key={m.id} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 12px", background: "#f9fafb", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                            <div>
+                              <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 3 }}>To: {m.targetEmpName} · {formatDateTimeNZ(m.sentAt)}</div>
+                              <div style={{ fontSize: 13, color: "#111827" }}>{m.text}</div>
+                              <div style={{ fontSize: 11, color: "#6b7280", marginTop: 3 }}>Dismissed by {(m.dismissed||[]).length} staff</div>
+                            </div>
+                            <button style={{ ...bStyle("danger"), padding: "4px 10px", fontSize: 12 }} onClick={() => deleteStaffMessage(m.id)}>🗑️</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div style={cStyle()}>
                   {/* Admin View header with List/Summary toggle */}
